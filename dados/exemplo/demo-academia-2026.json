@@ -1,0 +1,158 @@
+{
+  "prova": { "duracao_min": 30, "caderno": "" },
+  "textos_base": {
+    "tb1": "A presença da guarda municipal nas praças e escolas mudou a rotina do bairro. Os moradores, que antes evitavam sair à noite, voltaram a ocupar os espaços públicos. Para os comerciantes, a sensação de segurança trouxe mais clientes; para as crianças, trouxe de volta o parque. Ainda assim, especialistas lembram que a prevenção depende tanto do patrulhamento quanto da iluminação, da limpeza e da participação da comunidade."
+  },
+  "questoes": [
+    {
+      "id": "demo-academia-2026-q1",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 1 },
+      "formato": "ME5", "texto_base_id": "tb1",
+      "enunciado": "De acordo com o texto, a sensação de segurança no bairro",
+      "alternativas": {
+        "A": "dependeu exclusivamente do aumento do patrulhamento.",
+        "B": "trouxe benefícios a diferentes grupos de moradores.",
+        "C": "afastou os comerciantes das praças e escolas.",
+        "D": "tornou desnecessária a participação da comunidade.",
+        "E": "reduziu o uso noturno dos espaços públicos."
+      },
+      "gabarito": "B", "gabarito_fonte": "definitivo",
+      "materia": "Língua Portuguesa", "tema": "Interpretação de texto",
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "O texto cita ganhos para moradores (voltaram a sair à noite), comerciantes (mais clientes) e crianças (o parque de volta). A alternativa A contraria o último período, que fala também em iluminação, limpeza e participação da comunidade."
+    },
+    {
+      "id": "demo-academia-2026-q2",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 2 },
+      "formato": "ME5", "texto_base_id": "tb1",
+      "enunciado": "No trecho “Ainda assim, especialistas lembram que a prevenção depende…”, a expressão “Ainda assim” estabelece, em relação ao que foi dito antes, sentido de",
+      "alternativas": { "A": "causa.", "B": "conclusão.", "C": "concessão.", "D": "tempo.", "E": "finalidade." },
+      "gabarito": "C", "gabarito_fonte": "definitivo",
+      "materia": "Língua Portuguesa", "tema": "Coesão e conectivos",
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "“Ainda assim” equivale a “mesmo assim”, “apesar disso”: admite o que foi dito (os benefícios) e introduz uma ressalva. É valor concessivo."
+    },
+    {
+      "id": "demo-academia-2026-q3",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 3 },
+      "formato": "ME5",
+      "enunciado": "Assinale a alternativa em que a concordância verbal está de acordo com a norma-padrão.",
+      "alternativas": {
+        "A": "Fazem dois anos que a guarda foi criada.",
+        "B": "Houveram muitas ocorrências no fim de semana.",
+        "C": "Existe, no município, três bases da guarda.",
+        "D": "Haviam guardas em todas as escolas.",
+        "E": "Devem existir protocolos claros para o uso da força."
+      },
+      "gabarito": "E", "gabarito_fonte": "definitivo",
+      "materia": "Língua Portuguesa", "tema": "Concordância verbal",
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "“Existir” é pessoal e concorda com o sujeito (“protocolos claros”), e o auxiliar “devem” acompanha essa concordância. “Fazer” indicando tempo e “haver” no sentido de existir são impessoais (ficam no singular); em C, o certo é “Existem três bases”."
+    },
+    {
+      "id": "demo-academia-2026-q4",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 4 },
+      "formato": "ME5",
+      "enunciado": "Uma guarda municipal tem 120 agentes, dos quais 45% trabalham no turno diurno. Quantos agentes trabalham nos demais turnos?",
+      "alternativas": { "A": "54", "B": "60", "C": "66", "D": "72", "E": "75" },
+      "gabarito": "C", "gabarito_fonte": "definitivo",
+      "materia": "Raciocínio Lógico-Matemático", "tema": "Porcentagem",
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "45% de 120 = 54 no diurno. Nos demais turnos: 120 − 54 = 66 (ou 55% de 120)."
+    },
+    {
+      "id": "demo-academia-2026-q5",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 5 },
+      "formato": "ME5",
+      "enunciado": "Segundo a Constituição Federal, os Municípios poderão constituir guardas municipais destinadas",
+      "alternativas": {
+        "A": "à apuração de infrações penais, exceto as militares.",
+        "B": "ao policiamento ostensivo e à preservação da ordem pública em todo o território estadual.",
+        "C": "à proteção de seus bens, serviços e instalações, conforme dispuser a lei.",
+        "D": "ao patrulhamento ostensivo das rodovias federais.",
+        "E": "à execução de atividades de defesa civil, exclusivamente."
+      },
+      "gabarito": "C", "gabarito_fonte": "definitivo",
+      "materia": "Direito Constitucional", "tema": "Segurança pública (art. 144)",
+      "leis_citadas": ["CF/88, art. 144, § 8º"],
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "É a redação do art. 144, § 8º, da CF. A apuração de infrações penais é da polícia civil (A), a preservação da ordem pública é da polícia militar (B) e o patrulhamento das rodovias federais é da PRF (D)."
+    },
+    {
+      "id": "demo-academia-2026-q6",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 6 },
+      "formato": "ME5",
+      "enunciado": "De acordo com o Estatuto Geral das Guardas Municipais (Lei nº 13.022/2014), é princípio mínimo de atuação das guardas municipais:",
+      "alternativas": {
+        "A": "o uso imediato da força letal diante de qualquer resistência.",
+        "B": "o patrulhamento preventivo.",
+        "C": "a subordinação hierárquica à polícia militar.",
+        "D": "a investigação de crimes contra o patrimônio municipal.",
+        "E": "a dispensa de controle externo."
+      },
+      "gabarito": "B", "gabarito_fonte": "definitivo",
+      "materia": "Estatuto Geral das Guardas Municipais", "tema": "Princípios (art. 3º)",
+      "leis_citadas": ["Lei 13.022/2014, art. 3º"],
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "O art. 3º lista como princípios mínimos a proteção dos direitos humanos fundamentais, a preservação da vida, a redução do sofrimento e a diminuição das perdas, o patrulhamento preventivo, o compromisso com a evolução social da comunidade e o uso progressivo da força."
+    },
+    {
+      "id": "demo-academia-2026-q7",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 7 },
+      "formato": "ME5",
+      "enunciado": "Conforme a Lei nº 13.022/2014, a estrutura hierárquica da guarda municipal",
+      "alternativas": {
+        "A": "deve reproduzir os postos e graduações do Exército.",
+        "B": "pode adotar qualquer denominação, inclusive a das forças militares.",
+        "C": "não pode utilizar denominação idêntica à das forças militares quanto a postos, graduações, títulos, uniformes, distintivos e condecorações.",
+        "D": "é definida pelo comandante da polícia militar do Estado.",
+        "E": "deve ser igual à da polícia civil."
+      },
+      "gabarito": "C", "gabarito_fonte": "definitivo",
+      "materia": "Estatuto Geral das Guardas Municipais", "tema": "Estrutura e hierarquia",
+      "leis_citadas": ["Lei 13.022/2014, art. 19"],
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "É a vedação do art. 19 da Lei 13.022/2014."
+    },
+    {
+      "id": "demo-academia-2026-q8",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 8 },
+      "formato": "ME5",
+      "enunciado": "Pelo Código de Trânsito Brasileiro, onde não existir sinalização regulamentadora, a velocidade máxima nas vias locais urbanas é de",
+      "alternativas": { "A": "20 km/h.", "B": "30 km/h.", "C": "40 km/h.", "D": "60 km/h.", "E": "80 km/h." },
+      "gabarito": "B", "gabarito_fonte": "definitivo",
+      "materia": "Legislação de Trânsito", "tema": "Velocidade máxima (art. 61)",
+      "leis_citadas": ["CTB, art. 61, § 1º"],
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "Art. 61, § 1º, I, do CTB: 80 km/h nas vias de trânsito rápido, 60 km/h nas arteriais, 40 km/h nas coletoras e 30 km/h nas locais."
+    },
+    {
+      "id": "demo-academia-2026-q9",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 9 },
+      "formato": "CE",
+      "enunciado": "Julgue o item: segundo a Lei nº 13.022/2014, os cargos em comissão das guardas municipais devem ser providos por membros efetivos do quadro de carreira do órgão ou entidade.",
+      "alternativas": { "C": "Certo", "E": "Errado" },
+      "gabarito": "C", "gabarito_fonte": "definitivo",
+      "materia": "Estatuto Geral das Guardas Municipais", "tema": "Estrutura e hierarquia",
+      "leis_citadas": ["Lei 13.022/2014, art. 15"],
+      "escopo": "nacional", "status": "aprovada",
+      "comentario": "Certo. É o que diz o art. 15 da Lei 13.022/2014."
+    },
+    {
+      "id": "demo-academia-2026-q10",
+      "origem": { "banca": "Academia de Polícia (demonstração)", "orgao": "Simulado de demonstração", "municipio": "Cascavel", "uf": "PR", "cargo": "Guarda Municipal", "ano": 2026, "numero_original": 10 },
+      "formato": "ME4",
+      "enunciado": "Questão de demonstração de escopo municipal: ela só aparece no simulado da própria cidade (Cascavel) ou na prova real. Qual é a função deste tipo de questão no banco?",
+      "alternativas": {
+        "A": "Cobrar lei nacional em qualquer simulado.",
+        "B": "Cobrar realidade local só no simulado da cidade de origem.",
+        "C": "Substituir as questões de Língua Portuguesa.",
+        "D": "Ser removida do banco em qualquer situação."
+      },
+      "gabarito": "B", "gabarito_fonte": "definitivo",
+      "materia": "Realidades Municipais", "tema": "Exemplo",
+      "escopo": "municipal", "escopo_local": "Cascavel", "status": "aprovada",
+      "comentario": "Regra do banco (13/10/2026): questão da própria cidade fica com escopo municipal e só entra no simulado daquela cidade."
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0E0E0E">
+<link rel="icon" href="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<title>Prova · Simulados Academia de Polícia</title>
+</head>
+<body class="pg-prova blur-prova">
+<div class="fundo" aria-hidden="true"></div>
+
+<!-- portão: só mostra as questões depois de entrar em tela cheia -->
+<div class="gate" id="gate">
+  <div class="box">
+    <img class="brasao" src="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png" alt="Academia de Polícia">
+    <span class="kicker"><span class="ms">local_police</span><span id="gate-sim">Simulado</span></span>
+    <h2 id="gate-tit">Respira fundo. <em>A prova vai começar.</em></h2>
+    <p id="gate-sub">Ao clicar no botão, a prova abre em tela cheia e as questões aparecem.</p>
+    <ul>
+      <li><span class="ms">timer</span><span>O cronômetro de <b id="gate-dur">—</b> já está correndo.</span></li>
+      <li><span class="ms">warning</span><span>Sair da tela cheia, trocar de aba, minimizar, fechar ou recarregar conta como saída. <b id="gate-saidas">Na 3ª, a prova é entregue.</b></span></li>
+      <li id="gate-ce" class="oculto"><span class="ms">balance</span><span>Nas questões de certo/errado, <b>cada erro anula um acerto</b>. Na dúvida, deixe em branco.</span></li>
+      <li><span class="ms">speed</span><span>Cada questão mostra um contador de ritmo de <b id="ritmo-gate">—</b>. É só para treinar velocidade: passar dele não muda nada.</span></li>
+    </ul>
+    <button class="btn btn-ouro" id="gate-btn" disabled>Carregando…</button>
+  </div>
+</div>
+
+<header class="pbar">
+  <div class="in">
+    <span class="tit" id="p-tit"></span>
+    <div class="tempo" id="tempo" aria-live="off"><span class="ms">timer</span><b>00:00:00</b></div>
+    <div class="prog"><small><span id="prog-txt">0 respondidas</span><span id="prog-pc">0%</span></small><div class="barra" id="prog"><i></i></div></div>
+    <span class="saidas" id="saidas">Saídas: 0/3</span>
+    <button class="btn btn-ouro btn-sm" id="bt-entregar">Entregar</button>
+  </div>
+</header>
+
+<div class="prova">
+  <aside class="mapa card">
+    <div id="mapa"></div>
+    <div class="legenda"><span><i></i>Em branco</span><span><i class="r"></i>Respondida</span></div>
+    <p class="atalhos">Atalhos: <kbd>A</kbd>–<kbd>E</kbd> marcar · <kbd>C</kbd>/<kbd>E</kbd> certo/errado · <kbd>←</kbd> <kbd>→</kbd> navegar</p>
+  </aside>
+
+  <section class="qcard" id="qcard">
+    <div class="marca" aria-hidden="true"></div>
+    <div class="qbody">
+      <div class="qhead"><span class="qnum" id="q-num">Questão 1</span><span class="tag ouro" id="q-mat"></span><span class="salvo" id="salvo">✓ resposta salva</span></div>
+      <div class="origem" id="q-orig"></div>
+      <details class="textobase oculto" id="q-tb" open><summary>Texto de apoio</summary><div></div></details>
+      <p class="enun" id="q-txt"></p>
+      <div id="q-midia"></div>
+      <div class="alts" id="alts"></div>
+      <div class="qnav">
+        <button class="btn btn-linha btn-sm" id="prev"><span class="ms">arrow_back</span>Anterior</button>
+        <button class="limpar" id="limpar">Deixar em branco</button>
+        <button class="btn btn-linha btn-sm" id="next">Próxima<span class="ms">arrow_forward</span></button>
+      </div>
+    </div>
+    <div class="qtimer" id="qtimer" aria-live="off" title="Ritmo sugerido por questão. Apenas referência, sem penalidade."><i></i><span><small>Tempo da questão</small><b>0:00</b></span></div>
+  </section>
+</div>
+
+<div class="modal" id="m-aviso" role="alertdialog" aria-modal="true">
+  <div class="box">
+    <div class="ic-top alerta"><span class="ms">warning</span></div>
+    <h3>Você saiu da tela da prova</h3>
+    <p id="av-txt">Isso foi registrado.</p>
+    <div class="acoes"><button class="btn btn-ouro" id="av-ok">Voltar para a prova</button></div>
+  </div>
+</div>
+
+<div class="modal" id="m-entregar" role="dialog" aria-modal="true">
+  <div class="box">
+    <div class="ic-top"><span class="ms">flag</span></div>
+    <h3>Entregar a prova?</h3>
+    <p id="ent-txt"></p>
+    <div class="acoes">
+      <button class="btn btn-linha" data-fechar>Continuar respondendo</button>
+      <button class="btn btn-ouro" id="ent-ok">Sim, entregar agora</button>
+    </div>
+  </div>
+</div>
+
+<script src="/ui.js"></script>
+<script src="/prova.js"></script>
+</body>
+</html>

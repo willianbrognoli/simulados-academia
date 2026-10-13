@@ -1,0 +1,24 @@
+{
+  "name": "simulados-academia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma de simulados da Academia de Polícia: banco de questões de provas de Guarda Municipal de todo o Brasil, por prova, banca e matéria.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "importar:inventario": "node scripts/importar-inventario.js",
+    "importar:questoes": "node scripts/importar-questoes.js",
+    "simulados:gerar": "node scripts/gerar-simulados.js",
+    "demo": "node scripts/demo.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  }
+}

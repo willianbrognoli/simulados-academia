@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0E0E0E">
+<link rel="icon" href="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<title>Simulados · Academia de Polícia</title>
+</head>
+<body class="pg-auth">
+<div class="fundo" aria-hidden="true"></div>
+
+<main class="auth">
+  <section class="auth-hero">
+    <img class="brasao" src="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png" alt="Academia de Polícia">
+    <span class="kicker"><span class="ms">local_police</span>Guardas Municipais · todo o Brasil</span>
+    <h1>Simulados<br><em>de quem vai vestir a farda.</em></h1>
+    <p class="lead">Provas reais de Guarda Municipal de todo o país, organizadas por concurso, banca e matéria. Cronômetro, correção na hora, desempenho por matéria e ranking da tropa.</p>
+    <ul class="chips">
+      <li><b>Provas reais</b> refaça a prova do concurso</li>
+      <li><b>Estilo banca</b> treine no jeito da sua banca</li>
+      <li><b>Por matéria</b> ataque o ponto fraco</li>
+    </ul>
+  </section>
+
+  <section class="auth-card">
+    <div class="tabs" role="tablist">
+      <button class="tab on" data-tab="entrar" role="tab">Entrar</button>
+      <button class="tab" data-tab="criar" role="tab">Criar conta</button>
+      <span class="tab-ink" aria-hidden="true"></span>
+    </div>
+
+    <form id="f-entrar" class="form on" novalidate>
+      <label>CPF<input name="cpf" inputmode="numeric" autocomplete="username" placeholder="000.000.000-00"><span class="dica-campo"></span></label>
+      <label>Senha<input name="senha" type="password" autocomplete="current-password" placeholder="Sua senha"></label>
+      <button class="btn btn-ouro w100" type="submit"><span class="ms">login</span>Entrar</button>
+    </form>
+
+    <form id="f-criar" class="form" novalidate>
+      <label>Nome completo<input name="nome" autocomplete="name" placeholder="Como no seu documento"></label>
+      <label>CPF<input name="cpf" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00"><span class="dica-campo"></span></label>
+      <div class="row2">
+        <label>E-mail<input name="email" type="email" autocomplete="email" placeholder="voce@email.com"></label>
+        <label>WhatsApp<input name="whatsapp" inputmode="tel" autocomplete="tel" placeholder="(45) 99999-9999"></label>
+      </div>
+      <label>Crie uma senha<input name="senha" type="password" autocomplete="new-password" placeholder="Mínimo de 6 caracteres"></label>
+      <label class="check"><input type="checkbox" name="lgpd" value="1"> Concordo com o uso dos meus dados para os simulados, o ranking (apenas primeiro nome e inicial) e comunicações da Academia de Polícia, conforme a LGPD.</label>
+      <button class="btn btn-ouro w100" type="submit"><span class="ms">how_to_reg</span>Criar conta e começar</button>
+    </form>
+
+    <p class="fine">Seu CPF fica vinculado às suas tentativas. Esqueceu a senha? Fale com a equipe pelo WhatsApp.</p>
+  </section>
+</main>
+
+<script src="/ui.js"></script>
+<script src="/auth.js"></script>
+</body>
+</html>

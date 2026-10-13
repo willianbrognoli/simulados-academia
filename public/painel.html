@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0E0E0E">
+<link rel="icon" href="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+<title>Painel · Simulados Academia de Polícia</title>
+</head>
+<body>
+<div class="fundo" aria-hidden="true"></div>
+<header class="topo">
+  <div class="in">
+    <a class="marca-ap" href="/painel"><img src="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png" alt=""><b>Academia de Polícia<small>Simulados GCM</small></b></a>
+    <span class="sp"></span>
+    <span class="ola" id="ola"></span>
+    <button class="btn btn-linha btn-sm" id="sair"><span class="ms">logout</span>Sair</button>
+  </div>
+</header>
+
+<main class="pagina">
+  <section class="hero-p">
+    <div class="card rv">
+      <span class="kicker"><span class="ms">military_tech</span>Base de operações</span>
+      <h1 id="titulo">Escolha sua <em>próxima missão</em></h1>
+      <p id="subtitulo">Refaça provas reais de Guarda Municipal, treine no estilo da sua banca ou ataque uma matéria específica.</p>
+      <div id="aberta"></div>
+      <a class="btn btn-ouro" href="#catalogo" id="bt-catalogo"><span class="ms">target</span>Ver simulados</a>
+    </div>
+    <div class="card rv">
+      <div class="patente">
+        <div class="insignia" id="ins"><span class="ms">school</span></div>
+        <div style="flex:1">
+          <small>Sua patente</small>
+          <b id="pat">Aluno-guarda</b>
+          <div class="barra" style="margin:8px 0 4px"><i id="xp-bar"></i></div>
+          <small id="xp-txt">0 XP</small>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="k-qtd">0</b><span>Simulados</span></div>
+        <div class="kpi"><b id="k-resp">0</b><span>Questões</span></div>
+        <div class="kpi"><b id="k-apr">0%</b><span>Aproveit.</span></div>
+        <div class="kpi"><b id="k-mat">0</b><span>Matérias</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card rv" id="catalogo">
+    <h3><span class="ms">inventory_2</span>Catálogo de simulados</h3>
+    <div class="filtros">
+      <div class="seg" id="f-tipo">
+        <button data-t="" class="on">Todos</button>
+        <button data-t="edital">Editais</button>
+        <button data-t="prova_real">Provas reais</button>
+        <button data-t="banca">Estilo banca</button>
+        <button data-t="materia">Por matéria</button>
+      </div>
+      <div class="busca"><span class="ms">search</span><input id="f-busca" placeholder="Buscar cidade, banca, matéria…" aria-label="Buscar"></div>
+      <select id="f-uf" aria-label="Estado"><option value="">Todos os estados</option></select>
+      <select id="f-banca" aria-label="Banca"><option value="">Todas as bancas</option></select>
+    </div>
+    <div class="catalogo" id="lista"></div>
+    <div class="mais"><button class="btn btn-linha btn-sm oculto" id="mais">Mostrar mais</button></div>
+  </section>
+
+  <section class="grid2">
+    <div class="card rv">
+      <h3><span class="ms">monitoring</span>Desempenho por matéria</h3>
+      <p class="sub">Soma de todos os simulados que você fez.</p>
+      <div class="temas" id="materias"></div>
+    </div>
+    <div class="card rv">
+      <h3><span class="ms">route</span>Plano de estudo</h3>
+      <p class="sub">Onde você já está firme e o que atacar primeiro (por tema).</p>
+      <h4 class="kicker" style="margin:4px 0 8px">Pontos fortes</h4>
+      <ul class="foco" id="bem"></ul>
+      <h4 class="kicker" style="margin:16px 0 8px">Prioridades</h4>
+      <ul class="foco" id="mal"></ul>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card rv">
+      <h3><span class="ms">history</span>Histórico</h3>
+      <div class="hist" id="hist"><p class="vazio">Nenhum simulado concluído ainda.</p></div>
+    </div>
+    <div class="card rv">
+      <h3><span class="ms">leaderboard</span>Ranking da tropa</h3>
+      <div class="rank-top">
+        <select id="rk-sim" aria-label="Simulado do ranking"></select>
+        <div class="seg" id="rk-modo"><button data-m="primeira" class="on">Oficial</button><button data-m="melhor">Melhor nota</button></div>
+      </div>
+      <table class="rank"><thead><tr><th>#</th><th>Aluno</th><th>Nota</th><th>Tempo</th></tr></thead><tbody id="rank"><tr><td colspan="4" class="vazio">Faça um simulado para entrar no ranking.</td></tr></tbody></table>
+      <p class="fine">Oficial = 1ª tentativa de cada aluno, desempate pelo menor tempo.</p>
+    </div>
+  </section>
+
+  <section class="card rv" style="margin-top:18px">
+    <h3><span class="ms">workspace_premium</span>Condecorações</h3>
+    <p class="sub" id="bdg-sub"></p>
+    <div class="medalhas" id="badges"></div>
+  </section>
+</main>
+
+<div class="modal" id="m-regras" role="dialog" aria-modal="true">
+  <div class="box">
+    <div class="ic-top"><span class="ms">assignment</span></div>
+    <h3 id="mr-tit">Simulado</h3>
+    <p id="mr-sub"></p>
+    <ul id="mr-regras"></ul>
+    <label class="check"><input type="checkbox" id="ck-regras"> Li as regras e estou pronto para começar agora.</label>
+    <div class="acoes">
+      <button class="btn btn-linha" data-fechar>Agora não</button>
+      <button class="btn btn-ouro" id="bt-comecar" disabled><span class="ms">play_arrow</span>Começar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/ui.js"></script>
+<script src="/painel.js"></script>
+</body>
+</html>

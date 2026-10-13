@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Questão de prova de Guarda Municipal (banco de simulados da Academia de Polícia)",
+  "type": "object",
+  "required": ["id", "origem", "formato", "enunciado", "alternativas", "gabarito", "materia", "escopo", "status"],
+  "properties": {
+    "id": { "type": "string", "description": "<id da prova>-q<numero original>, ex.: jundiai-2023-q23" },
+    "origem": {
+      "type": "object",
+      "required": ["banca", "orgao", "municipio", "uf", "cargo", "ano", "numero_original"],
+      "properties": {
+        "banca": { "type": "string", "examples": ["Vunesp"] },
+        "orgao": { "type": "string", "examples": ["Prefeitura de Jundiaí"] },
+        "municipio": { "type": "string" },
+        "uf": { "type": "string", "minLength": 2, "maxLength": 2 },
+        "cargo": { "type": "string" },
+        "ano": { "type": "integer" },
+        "data_prova": { "type": "string", "format": "date" },
+        "caderno": { "type": "string", "description": "versão/tipo do caderno, quando houver" },
+        "numero_original": { "type": "integer" },
+        "arquivo": { "type": "string", "description": "nome do PDF de origem" }
+      }
+    },
+    "formato": { "enum": ["ME4", "ME5", "CE"], "description": "ME4 = A–D, ME5 = A–E, CE = certo/errado" },
+    "texto_base_id": { "type": ["string", "null"], "description": "id do texto compartilhado por várias questões" },
+    "enunciado": { "type": "string" },
+    "alternativas": {
+      "type": "object",
+      "description": "chaves A..E (ou C/E); valor = texto",
+      "additionalProperties": { "type": "string" }
+    },
+    "midia": {
+      "type": "array",
+      "description": "imagens/tabelas necessárias para responder",
+      "items": { "type": "object", "properties": { "tipo": { "enum": ["imagem", "tabela", "tira", "grafico"] }, "arquivo": { "type": "string" }, "descricao": { "type": "string" } } }
+    },
+    "gabarito": { "type": ["string", "null"], "description": "letra correta (definitivo); null se anulada" },
+    "gabarito_fonte": { "enum": ["definitivo", "preliminar"] },
+    "materia": { "type": "string", "examples": ["Língua Portuguesa", "Estatuto Geral das Guardas Municipais", "Realidades Municipais"] },
+    "tema": { "type": "string" },
+    "subtema": { "type": "string" },
+    "leis_citadas": { "type": "array", "items": { "type": "string" }, "examples": [["Lei 13.022/2014"]] },
+    "escopo": { "enum": ["nacional", "estadual", "municipal"], "description": "municipal = só entra no simulado do município de origem" },
+    "escopo_local": { "type": ["string", "null"], "description": "município (ou UF) quando escopo não é nacional" },
+    "status": {
+      "enum": ["extraida", "revisar", "aprovada", "removida"],
+      "description": "removida = anulada, lei alterada ou incompleta"
+    },
+    "motivo_remocao": { "enum": [null, "anulada", "lei_alterada", "incompleta", "duplicada"] },
+    "alertas": { "type": "array", "items": { "type": "string" }, "description": "ex.: 'lei possivelmente alterada: Estatuto do Desarmamento', 'depende de imagem'" },
+    "comentario": { "type": ["string", "null"], "description": "comentário original da Academia (escrito depois)" }
+  }
+}
