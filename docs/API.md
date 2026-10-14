@@ -3,7 +3,7 @@
 Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"}`.
 
 - **Aluno:** cookie `sid`, criado no login ou no cadastro.
-- **Admin:** header `Authorization: Bearer <ADMIN_TOKEN>`. Também aceita `?token=` para baixar o CSV pelo navegador.
+- **Admin:** header `Authorization: Bearer <ADMIN_TOKEN>` ou o cookie `adm`, criado no login do painel `/admin` (a senha é o `ADMIN_TOKEN`, a sessão dura 8 h). Também aceita `?token=` para baixar o CSV pelo navegador.
 
 ## Saúde
 
@@ -42,9 +42,12 @@ Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"
 | GET | `/api/admin/resumo` | — | Questões por status, matérias, simulados, acervo e número de alunos |
 | POST | `/api/admin/importar/inventario` | CSV (`text/csv`) ou `{"csv": "…"}` | Upsert de concursos pelo `id` |
 | POST | `/api/admin/importar/questoes` | JSON de uma prova | Use `?sobrescrever=1` para passar por cima da revisão |
-| GET | `/api/admin/itens?status=extraida,revisar&limite=100` | — | Fila de revisão |
-| PATCH | `/api/admin/itens/:codigo` | `status, motivo_remocao, gabarito, comentario, escopo, escopo_local` | Revisão de uma questão |
-| POST | `/api/admin/simulados/gerar` | `{minProva, minBanca, minMateria}` (opcional) | Cria ou atualiza o catálogo automático |
+| POST | `/api/admin/login` | `senha` | Abre a sessão do painel; limite de 10 tentativas a cada 15 min |
+| POST | `/api/admin/logout` | — | |
+| GET | `/api/admin/taxonomia` | — | Matérias, eixos e temas |
+| GET | `/api/admin/itens?status=revisar&materia=&q=&limite=50&offset=0` | — | Fila de revisão: `{total, itens}`. `q` busca no código e no enunciado |
+| PATCH | `/api/admin/itens/:codigo` | `status, motivo_remocao, gabarito, comentario, escopo, escopo_local, enunciado, alternativas, materia, tema` | Revisão e edição de uma questão |
+| POST | `/api/admin/simulados/gerar` | `{minProva, minBanca, minMateria, minTema}` (opcional) | Cria ou atualiza o catálogo automático, inclusive os simulados por tema |
 | PUT | `/api/admin/simulados/:slug` | `titulo, subtitulo, tipo, regras, meta, ativo, destaque, ordem` | Simulado manual (edital/livre) |
 | POST | `/api/admin/recontar` | — | Recalcula `total_itens` de todos os simulados |
 | GET | `/api/admin/alunos.csv` | — | Leads: nome, CPF, e-mail, WhatsApp, cadastro e simulados feitos |

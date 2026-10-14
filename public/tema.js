@@ -1,5 +1,4 @@
-// carregado no <head> (síncrono) para aplicar o tema antes de pintar a página
+// carregado no <head> (síncrono) para aplicar o tema antes de pintar a página; padrão: claro
 try {
-  var t = localStorage.getItem('tema') || (matchMedia('(prefers-color-scheme: light)').matches ? 'claro' : 'escuro');
-  if (t === 'claro') document.documentElement.dataset.tema = 'claro';
-} catch (e) {}
+  if (localStorage.getItem('tema') !== 'escuro') document.documentElement.dataset.tema = 'claro';
+} catch (e) { document.documentElement.dataset.tema = 'claro'; }

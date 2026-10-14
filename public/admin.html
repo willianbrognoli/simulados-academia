@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+<script src="/tema.js"></script>
+<link rel="stylesheet" href="/vendor/katex/katex.min.css">
+<script defer src="/vendor/katex/katex.min.js"></script>
+<script defer src="/vendor/katex/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="/app.css">
+<title>Revisão · Simulados Academia de Polícia</title>
+</head>
+<body>
+<div class="fundo" aria-hidden="true"></div>
+
+<!-- login -->
+<main class="adm-login oculto" id="tela-login">
+  <form class="auth-card" id="f-login">
+    <span class="kicker"><span class="ms">admin_panel_settings</span>Administração</span>
+    <h2>Painel de <em>revisão</em></h2>
+    <label>Senha de administrador<input type="password" name="senha" autocomplete="current-password" required></label>
+    <button class="btn btn-ouro w100" type="submit">Entrar</button>
+    <p class="adm-erro" id="login-erro"></p>
+  </form>
+</main>
+
+<!-- painel -->
+<div class="oculto" id="tela-painel">
+  <header class="topo">
+    <div class="in">
+      <a class="marca-ap" href="/admin"><img src="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png" alt=""><b>Academia de Polícia<small>Revisão de questões</small></b></a>
+      <span class="sp"></span>
+      <span class="ola" id="resumo"></span>
+      <button class="btn btn-linha btn-sm" id="sair"><span class="ms">logout</span>Sair</button>
+    </div>
+  </header>
+
+  <main class="adm">
+    <section class="adm-lista card">
+      <div class="adm-filtros">
+        <select id="f-status" aria-label="Situação">
+          <option value="revisar">Para revisar</option>
+          <option value="aprovada">Aprovadas (no ar)</option>
+          <option value="removida">Removidas</option>
+          <option value="extraida">Extraídas (sem triagem)</option>
+        </select>
+        <select id="f-materia" aria-label="Matéria"><option value="">Todas as matérias</option></select>
+        <div class="busca"><span class="ms">search</span><input id="f-q" placeholder="Código ou trecho do enunciado"></div>
+      </div>
+      <p class="sub" id="contagem"></p>
+      <div id="lista"></div>
+      <div class="adm-pag">
+        <button class="btn btn-linha btn-sm" id="ant">Anterior</button>
+        <span id="pag"></span>
+        <button class="btn btn-linha btn-sm" id="prox">Próxima</button>
+      </div>
+    </section>
+
+    <section class="adm-editor card" id="editor">
+      <p class="vazio">Escolha uma questão na lista.</p>
+    </section>
+  </main>
+</div>
+
+<script src="/ui.js"></script>
+<script src="/admin.js"></script>
+</body>
+</html>

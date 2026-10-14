@@ -5,7 +5,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool, init } = require('./db');
 const S = require('./lib/simulados');
-const { importarInventario, importarQuestoes } = require('./lib/importar');
+const { importarInventario, importarQuestoes, garantirMateria, garantirTema } = require('./lib/importar');
+const { MATERIAS_PADRAO } = require('./lib/taxonomia');
 
 // ---------------- configuração ----------------
 const PORT = process.env.PORT || 3000;
@@ -79,6 +80,7 @@ function auth(req, res, next) {
   next();
 }
 function admin(req, res, next) {
+  if (verificar(lerCookie(req, 'adm'))?.adm) return next();
   const tok = String((req.headers.authorization || '').replace(/^Bearer\s+/i, '') || req.query.token || '');
   if (!ADMIN_TOKEN || tok.length !== ADMIN_TOKEN.length || !crypto.timingSafeEqual(Buffer.from(tok), Buffer.from(ADMIN_TOKEN))) return erro(res, 'Não autorizado.', 401);
   next();
@@ -480,20 +482,41 @@ app.put('/api/admin/simulados/:slug', admin, h(async (req, res) => {
   res.json({ ok: true, slug: req.params.slug, itens: n });
 }));
 
-// fila de revisão: lista itens por status (padrão: extraida + revisar)
+// login do painel de administração: a senha é o ADMIN_TOKEN; vira cookie HttpOnly assinado (8 h)
+app.post('/api/admin/login', limitar(10, 15 * 60e3), (req, res) => {
+  const senha = String((req.body && req.body.senha) || '');
+  if (!ADMIN_TOKEN || senha.length !== ADMIN_TOKEN.length || !crypto.timingSafeEqual(Buffer.from(senha), Buffer.from(ADMIN_TOKEN))) return erro(res, 'Senha incorreta.', 401);
+  res.setHeader('Set-Cookie', `adm=${assinar({ adm: true, exp: Date.now() + 8 * 36e5 })}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${8 * 3600}${PROD ? '; Secure' : ''}`);
+  res.json({ ok: true });
+});
+app.post('/api/admin/logout', (req, res) => {
+  res.setHeader('Set-Cookie', `adm=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${PROD ? '; Secure' : ''}`);
+  res.json({ ok: true });
+});
+app.get('/api/admin/taxonomia', admin, (req, res) => res.json(MATERIAS_PADRAO.map(m => ({ nome: m.nome, eixo: m.eixo, temas: m.temas }))));
+
+// fila de revisão: filtros status, materia, q (código ou trecho do enunciado), offset/limite
 app.get('/api/admin/itens', admin, h(async (req, res) => {
   const st = String(req.query.status || 'extraida,revisar').split(',');
   const lim = Math.min(500, Number(req.query.limite) || 100);
-  const { rows } = await pool.query(
-    `SELECT i.codigo, i.status, i.formato, i.numero_original, i.enunciado, i.alternativas, i.gabarito, i.escopo, i.escopo_local,
-            i.alertas, i.leis_citadas, m.nome AS materia, t.nome AS tema, c.slug AS concurso
-     FROM itens i JOIN provas p ON p.id = i.prova_id JOIN concursos c ON c.id = p.concurso_id
-     LEFT JOIN materias m ON m.id = i.materia_id LEFT JOIN temas t ON t.id = i.tema_id
-     WHERE i.status = ANY($1) ORDER BY c.slug, i.numero_original LIMIT $2`, [st, lim]);
-  res.json(rows);
+  const off = Math.max(0, Number(req.query.offset) || 0);
+  const w = ['i.status = ANY($1)'], p = [st];
+  if (req.query.materia) { p.push(String(req.query.materia)); w.push(`m.nome = $${p.length}`); }
+  if (req.query.q) { p.push('%' + String(req.query.q).trim() + '%'); w.push(`(i.codigo ILIKE $${p.length} OR i.enunciado ILIKE $${p.length})`); }
+  const where = w.join(' AND ');
+  const base = `FROM itens i JOIN provas p ON p.id = i.prova_id JOIN concursos c ON c.id = p.concurso_id
+     LEFT JOIN bancas b ON b.id = c.banca_id LEFT JOIN materias m ON m.id = i.materia_id LEFT JOIN temas t ON t.id = i.tema_id
+     LEFT JOIN textos_base tb ON tb.id = i.texto_base_id WHERE ${where}`;
+  const [tot, { rows }] = await Promise.all([
+    pool.query(`SELECT count(*)::int AS n ${base}`, p),
+    pool.query(`SELECT i.codigo, i.status, i.formato, i.numero_original, i.enunciado, i.alternativas, i.gabarito, i.escopo, i.escopo_local,
+            i.alertas, i.comentario, i.motivo_remocao, m.nome AS materia, t.nome AS tema, tb.conteudo AS texto_base,
+            c.slug AS concurso, c.municipio, c.uf, c.ano, b.nome AS banca, p.arquivo
+     ${base} ORDER BY c.slug, i.numero_original LIMIT ${lim} OFFSET ${off}`, p)]);
+  res.json({ total: tot.rows[0].n, itens: rows });
 }));
 
-// revisão de um item: status, motivo_remocao, comentario, gabarito, escopo, escopo_local
+// revisão de um item: status, motivo_remocao, comentario, gabarito, escopo, escopo_local, enunciado, alternativas, materia, tema
 app.patch('/api/admin/itens/:codigo', admin, h(async (req, res) => {
   const b = req.body || {};
   const campos = [], vals = [req.params.codigo];
@@ -507,6 +530,21 @@ app.patch('/api/admin/itens/:codigo', admin, h(async (req, res) => {
   if ('gabarito' in b) set('gabarito', b.gabarito ? String(b.gabarito).toUpperCase() : null);
   if (b.escopo) set('escopo', b.escopo);
   if ('escopo_local' in b) set('escopo_local', b.escopo_local || null);
+  if (typeof b.enunciado === 'string') {
+    if (b.enunciado.trim().length < 5) return erro(res, 'Enunciado vazio.');
+    set('enunciado', b.enunciado);
+  }
+  if (b.alternativas && typeof b.alternativas === 'object') {
+    const alt = {};
+    for (const [k, v] of Object.entries(b.alternativas)) if (/^[A-E]$/.test(k) && String(v).trim()) alt[k] = String(v);
+    if (Object.keys(alt).length < 2) return erro(res, 'Informe ao menos duas alternativas.');
+    set('alternativas', alt);
+  }
+  if (b.materia) {
+    const mid = await garantirMateria(pool, String(b.materia));
+    set('materia_id', mid);
+    set('tema_id', b.tema ? await garantirTema(pool, mid, String(b.tema)) : null);
+  }
   if (!campos.length) return erro(res, 'Nada para alterar.');
   const r = await pool.query(`UPDATE itens SET ${campos.join(', ')}, atualizado_em = now() WHERE codigo = $1 RETURNING codigo, status`, vals);
   if (!r.rows[0]) return erro(res, 'Item não encontrado.', 404);

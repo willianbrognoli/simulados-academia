@@ -1,12 +1,13 @@
 'use strict';
 let ME, SIMS = [], HIST = [], DES = {}, agoraSrv = 0, desvio = 0;
-let fTipo = '', fBusca = '', fUF = '', fBanca = '', limite = 24, escolhido = null, modoRank = 'primeira';
+let fTipo = '', fBusca = '', fUF = '', fBanca = '', fAno = '', limite = 24, escolhido = null, modoRank = 'primeira';
 
 const TIPOS = {
   edital: { n: 'Edital', ic: 'campaign' },
   prova_real: { n: 'Prova real', ic: 'description' },
   banca: { n: 'Estilo banca', ic: 'account_balance' },
   materia: { n: 'Por matéria', ic: 'menu_book' },
+  tema: { n: 'Por tema', ic: 'label' },
   livre: { n: 'Treino', ic: 'bolt' },
 };
 
@@ -66,6 +67,8 @@ function montarFiltros() {
   const bancas = [...new Set(SIMS.map(s => s.meta && s.meta.banca).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   $('#f-uf').innerHTML += ufs.map(u => `<option>${esc(u)}</option>`).join('');
   $('#f-banca').innerHTML += bancas.map(b => `<option>${esc(b)}</option>`).join('');
+  const anos = [...new Set(SIMS.map(s => s.meta && s.meta.ano).filter(Boolean))].sort((a, b) => b - a);
+  $('#f-ano').innerHTML += anos.map(a => `<option>${esc(a)}</option>`).join('');
   $('#f-tipo').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     fTipo = b.dataset.t; limite = 24;
@@ -76,6 +79,7 @@ function montarFiltros() {
   $('#f-busca').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { fBusca = e.target.value; limite = 24; montarCatalogo(); }, 200); });
   $('#f-uf').addEventListener('change', e => { fUF = e.target.value; limite = 24; montarCatalogo(); });
   $('#f-banca').addEventListener('change', e => { fBanca = e.target.value; limite = 24; montarCatalogo(); });
+  $('#f-ano').addEventListener('change', e => { fAno = e.target.value; limite = 24; montarCatalogo(); });
   $('#mais').addEventListener('click', () => { limite += 24; montarCatalogo(); });
 }
 
@@ -86,6 +90,7 @@ function montarCatalogo() {
   const lista = SIMS.filter(s => (!fTipo || s.tipo === fTipo)
     && (!fUF || (s.meta && s.meta.uf) === fUF)
     && (!fBanca || (s.meta && s.meta.banca) === fBanca)
+    && (!fAno || String(s.meta && s.meta.ano) === fAno)
     && (!q || norm([s.titulo, s.subtitulo, s.meta && s.meta.banca, s.meta && s.meta.municipio].join(' ')).includes(q)));
   const box = $('#lista');
   if (!lista.length) {

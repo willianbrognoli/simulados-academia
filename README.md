@@ -172,5 +172,5 @@ Passo a passo completo, com os problemas já enfrentados no projeto da Fauth, em
 - Nenhum sistema web impede consulta a um **segundo aparelho**. A plataforma detecta e pune saídas da tela e dificulta cópias.
 - No **iPhone** não há tela cheia para páginas. A vigilância continua por troca de aba e saída do app.
 - **Não há confirmação de e-mail nem recuperação de senha.** A decisão entre e-mail e WhatsApp está pendente; veja `docs/ARQUITETURA.md`.
-- A **tela de revisão** de questões ainda é só por API. Uma interface de revisão é o próximo passo natural.
-- **Modo claro e escuro:** botão no cabeçalho; a escolha fica salva no navegador. Na primeira visita vale o tema do sistema.
+- **Painel de revisão** em `/admin`: fila de questões, edição de enunciado, alternativas, gabarito, matéria e tema, com prévia do que o aluno vê.
+- **Modo claro e escuro:** botão no cabeçalho; a escolha fica salva no navegador. O padrão é o claro.

@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS simulados (
   slug         TEXT NOT NULL UNIQUE,
   titulo       TEXT NOT NULL,
   subtitulo    TEXT,
-  tipo         TEXT NOT NULL CHECK (tipo IN ('prova_real', 'banca', 'materia', 'edital', 'livre')),
+  tipo         TEXT NOT NULL CHECK (tipo IN ('prova_real', 'banca', 'materia', 'tema', 'edital', 'livre')),
   regras       JSONB NOT NULL,
   meta         JSONB NOT NULL DEFAULT '{}'::jsonb,   -- banca, uf, ano, municipio (para filtros do catálogo)
   ativo        BOOLEAN NOT NULL DEFAULT true,
@@ -149,6 +149,9 @@ CREATE TABLE IF NOT EXISTS tentativas (
   por_materia      JSONB,
   primeira         BOOLEAN NOT NULL DEFAULT false
 );
+-- migração 14/10/2026: tipo 'tema'
+ALTER TABLE simulados DROP CONSTRAINT IF EXISTS simulados_tipo_check;
+ALTER TABLE simulados ADD CONSTRAINT simulados_tipo_check CHECK (tipo IN ('prova_real', 'banca', 'materia', 'tema', 'edital', 'livre'));
 CREATE UNIQUE INDEX IF NOT EXISTS tentativas_uma_aberta ON tentativas (aluno_id) WHERE finalizada_em IS NULL;
 CREATE INDEX IF NOT EXISTS tentativas_aluno ON tentativas (aluno_id, iniciada_em DESC);
 CREATE INDEX IF NOT EXISTS tentativas_ranking ON tentativas (simulado_id, nota DESC, duracao_seg) WHERE finalizada_em IS NOT NULL;
