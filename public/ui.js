@@ -20,6 +20,8 @@ async function api(url, opts = {}) {
 }
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// texto de questão: escapa e transforma __trecho__ em destaque (sublinhado + negrito), como o grifo da prova impressa
+const fmt = s => esc(s).replace(/__(.+?)__/g, '<u class="dest">$1</u>');
 const pad = n => String(n).padStart(2, '0');
 
 let _toastT;
