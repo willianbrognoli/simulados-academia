@@ -403,3 +403,4 @@ body.blur-prova .prova, body.blur-prova .pbar { filter: blur(14px); pointer-even
   .topo .ola { display: none; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
+.dest { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; font-weight: 700; color: inherit; }

@@ -201,13 +201,13 @@ function mostrar(i) {
   $('#q-orig').textContent = q.origem;
   const tb = q.textoBase && P.textos[q.textoBase];
   $('#q-tb').classList.toggle('oculto', !tb);
-  if (tb) $('#q-tb div').textContent = tb;
-  $('#q-txt').textContent = q.enunciado;
+  if (tb) $('#q-tb div').innerHTML = fmt(tb);
+  $('#q-txt').innerHTML = fmt(q.enunciado);
   $('#q-midia').innerHTML = htmlMidia(q.midia);
   const ce = q.formato === 'CE';
   $('#alts').className = 'alts' + (ce ? ' ce' : '');
   $('#alts').innerHTML = Object.entries(q.alternativas).sort(([a], [b]) => ce ? (a === 'C' ? -1 : 1) : a.localeCompare(b)).map(([k, v]) =>
-    `<button class="alt" data-r="${k}"><span class="k">${k}</span><span>${esc(ce ? (k === 'C' ? 'Certo' : 'Errado') : v)}</span></button>`).join('');
+    `<button class="alt" data-r="${k}"><span class="k">${k}</span><span>${ce ? (k === 'C' ? 'Certo' : 'Errado') : fmt(v)}</span></button>`).join('');
   mat($('#qcard')); mat($('#q-tb'));
   $('#prev').disabled = idx === 0;
   $('#next').innerHTML = idx === P.questoes.length - 1 ? 'Revisar e entregar' : `Próxima${ms('arrow_forward')}`;

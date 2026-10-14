@@ -105,6 +105,10 @@ Enunciado, alternativas e textos de apoio aceitam fórmulas em LaTeX, desenhadas
 
 Não use `$…$`, porque o cifrão aparece em valores (R$). Potência simples pode ir em Unicode (m², 10³). Nunca deixe uma potência "achatada" (`x2`), porque ela fica ambígua.
 
+### Destaque (grifo)
+
+Quando o enunciado fala em "termo em destaque" ou "palavra sublinhada", marque o trecho com dois sublinhados de cada lado: `não foi __a pensada__ pelos criadores`. Na tela, ele aparece sublinhado e em negrito.
+
 ## 3. Importar
 
 ```bash

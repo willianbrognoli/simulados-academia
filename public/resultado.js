@@ -63,13 +63,13 @@ function revisao() {
       : s === 'erro' ? `<span class="tag bad">✗ Você errou${R.erroAnula ? ' (−1)' : ''}</span>` : '<span class="tag">Em branco</span>';
     const alts = Object.entries(q.alternativas).sort(([a], [b]) => ce ? (a === 'C' ? -1 : 1) : a.localeCompare(b)).map(([k, v]) => {
       const cl = k === q.gabarito ? 'gab' : (k === q.resposta ? 'marcou-errado' : '');
-      return `<div class="alt ${cl}"><span class="k">${k}</span><span>${esc(ce ? (k === 'C' ? 'Certo' : 'Errado') : v)}</span></div>`;
+      return `<div class="alt ${cl}"><span class="k">${k}</span><span>${ce ? (k === 'C' ? 'Certo' : 'Errado') : fmt(v)}</span></div>`;
     }).join('');
     return `<article class="rev ${s}">
       <div class="gb"><b>Questão ${q.n}</b><span class="tag ouro">${esc(q.materia || '')}</span>${q.tema ? `<span class="tag">${esc(q.tema)}</span>` : ''}${selo}</div>
       <div class="origem">${esc(q.origem)}</div>
-      ${q.textoBase ? `<details class="textobase"><summary>Texto de apoio</summary><div>${esc(q.textoBase)}</div></details>` : ''}
-      <p class="enun">${esc(q.enunciado)}</p>
+      ${q.textoBase ? `<details class="textobase"><summary>Texto de apoio</summary><div>${fmt(q.textoBase)}</div></details>` : ''}
+      <p class="enun">${fmt(q.enunciado)}</p>
       ${htmlMidia(q.midia)}
       <div class="alts ${ce ? 'ce' : ''}">${alts}</div>
       <div class="coment">${q.comentario ? `<b>Comentário:</b> ${esc(q.comentario)}` : '<b>Comentário:</b> em produção pela equipe da Academia.'}</div>
