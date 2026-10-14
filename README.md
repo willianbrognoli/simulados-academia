@@ -32,7 +32,7 @@ Este projeto nasceu da base do simulado da Prof.ª Adriane Fauth (`simulados-fau
 
 ```
  provas-gcm/ (PDFs + inventario.csv)
-        │  extração (fora deste repo): PDF → JSON no formato docs/questao.schema.json
+        │  extração (pasta extracao/): PDF → JSON no formato docs/questao.schema.json
         ▼
  importar:inventario ─┐
  importar:questoes ───┼──► Postgres (concursos, provas, itens, matérias, temas)
@@ -127,6 +127,7 @@ Passo a passo completo, com os problemas já enfrentados no projeto da Fauth, em
 | `dados/exemplo/` | Prova de demonstração no formato de importação |
 | `midia/` | Imagens das questões (volume em produção; fora do Git) |
 | `test/` | `node --test` das regras puras |
+| `extracao/` | Pipeline Python PDF → JSON e triagem automática (ver `extracao/README.md`) |
 
 ## Regras implementadas
 
