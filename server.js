@@ -139,7 +139,7 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    `font-src https://fonts.gstatic.com; img-src 'self' data: ${IMG_HOSTS}; connect-src 'self'; ` +
+    `font-src 'self' https://fonts.gstatic.com; img-src 'self' data: ${IMG_HOSTS}; connect-src 'self'; ` +
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
   if (PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   next();
@@ -530,6 +530,7 @@ app.get('/api/admin/alunos.csv', admin, h(async (req, res) => {
 
 // ----- arquivos -----
 app.use('/midia', express.static(MIDIA_DIR, { maxAge: '7d', fallthrough: false }));
+app.use('/vendor/katex', express.static(path.join(__dirname, 'node_modules/katex/dist'), { maxAge: '30d', fallthrough: false }));
 app.use(express.static(path.join(__dirname, 'public'), {
   extensions: ['html'],
   setHeaders: (res, p) => res.setHeader('Cache-Control', p.endsWith('.html') ? 'no-store' : 'public, max-age=3600'),

@@ -208,6 +208,7 @@ function mostrar(i) {
   $('#alts').className = 'alts' + (ce ? ' ce' : '');
   $('#alts').innerHTML = Object.entries(q.alternativas).sort(([a], [b]) => ce ? (a === 'C' ? -1 : 1) : a.localeCompare(b)).map(([k, v]) =>
     `<button class="alt" data-r="${k}"><span class="k">${k}</span><span>${esc(ce ? (k === 'C' ? 'Certo' : 'Errado') : v)}</span></button>`).join('');
+  mat($('#qcard')); mat($('#q-tb'));
   $('#prev').disabled = idx === 0;
   $('#next').innerHTML = idx === P.questoes.length - 1 ? 'Revisar e entregar' : `Próxima${ms('arrow_forward')}`;
   estado();

@@ -75,6 +75,7 @@ function revisao() {
       <div class="coment">${q.comentario ? `<b>Comentário:</b> ${esc(q.comentario)}` : '<b>Comentário:</b> em produção pela equipe da Academia.'}</div>
     </article>`;
   }).join('') : '<p class="vazio">Nenhuma questão nesta categoria.</p>';
+  mat($('#revisao'));
 }
 
 $('#filtros').addEventListener('click', e => {

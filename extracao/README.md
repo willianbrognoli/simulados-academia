@@ -57,3 +57,17 @@ O resto foi marcado `removida` com `motivo_remocao`:
 - `triagem automática: extração ou gabarito incertos` (4.942).
 
 Reimportar não desfaz a revisão humana. Exceção: se a questão vier anulada, ela passa a removida.
+
+## Fórmulas (Matemática e Raciocínio Lógico)
+
+A extração achata a notação: "x²" vira "x2", frações e raízes se desmontam, e símbolos de fonte especial viram lixo. O tratamento tem três etapas:
+
+1. **Triagem por IA** (`formulas/TRIAGEM.md`): lê todas as questões de Matemática e RLM, mais as suspeitas de `formulas/suspeitas_mat.py`, e marca `ok` ou `quebrada`.
+2. **Correção por IA a partir do PDF** (`formulas/CORRECAO.md`):
+   - `formulas/pagina.py <id>` renderiza a página da questão;
+   - a IA reescreve a questão em LaTeX (`\( … \)` e `\[ … \]`) ou marca `figura`, `ok` ou `descartar`.
+3. **Validação** (`node formulas/valida.js`): confere que todas as fórmulas compilam no KaTeX, que as letras das alternativas batem e que não sobrou potência achatada.
+
+Rodada de 14/10/2026: 782 questões quebradas → 710 de volta ao ar, 51 removidas por depender de figura, 11 descartadas, 10 em revisão por gabarito suspeito.
+
+`limpar.py` remove o lixo de página (número, título da seção seguinte, "responda as questões…") da última alternativa e troca m2/m3 por m²/m³. Ele roda em todas as questões.

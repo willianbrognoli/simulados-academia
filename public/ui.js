@@ -184,3 +184,36 @@ function htmlMidia(midia) {
     ? `<figure><img src="/midia/${encodeURIComponent(m.arquivo)}" alt="${esc(m.descricao || 'Imagem da questão')}" loading="lazy">${m.descricao ? `<figcaption>${esc(m.descricao)}</figcaption>` : ''}</figure>`
     : `<p class="origem">[${esc(m.tipo || 'mídia')}] ${esc(m.descricao || '')}</p>`).join('')}</div>`;
 }
+
+// fórmulas: o texto usa \( … \) (na linha) e \[ … \] (destacada); o KaTeX é carregado com defer
+function mat(el) {
+  if (!el) return;
+  const f = () => window.renderMathInElement && renderMathInElement(el, {
+    delimiters: [{ left: '\\[', right: '\\]', display: true }, { left: '\\(', right: '\\)', display: false }],
+    throwOnError: false
+  });
+  if (window.renderMathInElement) f(); else addEventListener('load', f, { once: true });
+}
+
+// botão claro/escuro no cabeçalho de cada página
+(function () {
+  const cab = document.querySelector('.topo .in, .pbar .in, .auth-card');
+  if (!cab) return;
+  const b = document.createElement('button');
+  b.className = 'btn btn-linha btn-sm tema-btn';
+  b.type = 'button';
+  const pintar = () => {
+    const claro = document.documentElement.dataset.tema === 'claro';
+    b.innerHTML = `<span class="ms">${claro ? 'dark_mode' : 'light_mode'}</span>`;
+    b.title = b.ariaLabel = claro ? 'Mudar para modo escuro' : 'Mudar para modo claro';
+  };
+  b.addEventListener('click', () => {
+    const claro = document.documentElement.dataset.tema !== 'claro';
+    if (claro) document.documentElement.dataset.tema = 'claro'; else delete document.documentElement.dataset.tema;
+    try { localStorage.setItem('tema', claro ? 'claro' : 'escuro'); } catch (e) {}
+    pintar();
+  });
+  pintar();
+  if (cab.classList.contains('auth-card')) { b.style.cssText = 'position:absolute;top:14px;right:14px'; cab.style.position = 'relative'; }
+  cab.appendChild(b);
+})();

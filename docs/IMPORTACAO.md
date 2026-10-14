@@ -96,6 +96,15 @@ Uma questão inválida é **ignorada**, e o erro aparece no relatório. As demai
 - O aluno vê a imagem na questão e pode clicar para ampliar.
 - Sem `arquivo`, a descrição aparece como texto. Isso serve para quando a imagem ainda não foi recortada; nesse caso, deixe a questão em `revisar`.
 
+### Fórmulas
+
+Enunciado, alternativas e textos de apoio aceitam fórmulas em LaTeX, desenhadas na tela pelo KaTeX (servido pelo próprio app, em `/vendor/katex`):
+
+- na linha: `\( x^2 - 9x - 36 = 0 \)`;
+- destacada: `\[ \frac{-b \pm \sqrt{b^2-4ac}}{2a} \]`.
+
+Não use `$…$`, porque o cifrão aparece em valores (R$). Potência simples pode ir em Unicode (m², 10³). Nunca deixe uma potência "achatada" (`x2`), porque ela fica ambígua.
+
 ## 3. Importar
 
 ```bash
