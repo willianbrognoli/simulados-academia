@@ -153,6 +153,9 @@ CREATE TABLE IF NOT EXISTS tentativas (
 -- migração 14/10/2026: login pelo Firebase (senha fica com o Firebase; CPF segue UNIQUE = uma conta por pessoa)
 ALTER TABLE alunos ADD COLUMN IF NOT EXISTS firebase_uid TEXT UNIQUE;
 ALTER TABLE alunos ALTER COLUMN senha_hash DROP NOT NULL;
+-- migração 15/10/2026: comentários gerados por IA. ia_aprovado/humano aparecem para o aluno; ia_revisar espera o admin.
+ALTER TABLE itens ADD COLUMN IF NOT EXISTS comentario_status TEXT;
+ALTER TABLE itens ADD COLUMN IF NOT EXISTS comentario_nota TEXT;
 -- migração 14/10/2026: tipo 'tema'
 ALTER TABLE simulados DROP CONSTRAINT IF EXISTS simulados_tipo_check;
 ALTER TABLE simulados ADD CONSTRAINT simulados_tipo_check CHECK (tipo IN ('prova_real', 'banca', 'materia', 'tema', 'edital', 'livre'));

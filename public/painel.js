@@ -1,6 +1,6 @@
 'use strict';
 let ME, SIMS = [], HIST = [], DES = {}, agoraSrv = 0, desvio = 0;
-let fTipo = '', fBusca = '', fUF = '', fBanca = '', fAno = '', limite = 24, escolhido = null, modoRank = 'primeira';
+let fTipo = 'materia', ufSel = '', busca = '', escolhido = null, modoRank = 'primeira';
 
 const TIPOS = {
   edital: { n: 'Edital', ic: 'campaign' },
@@ -25,25 +25,20 @@ async function carregar() {
   $('#ola').innerHTML = `Olá, <b>${esc(ME.nome.split(' ')[0])}</b>`;
   montarHero();
   montarPatente();
-  montarFiltros();
+  montarMapa();
+  montarAcademia();
   montarCatalogo();
+  if (!ME.tentativaAberta) renderTreino($('#treino'), DES.porMateria);
   renderBarras($('#materias'), DES.porMateria, null, false);
   renderFoco($('#bem'), $('#mal'), DES.porTema, DES.dicas);
   montarHistorico();
   montarRanking();
   montarMedalhas();
-  revelar();
 }
 
 function montarHero() {
-  if (ME.tentativaAberta) {
-    $('#titulo').innerHTML = 'Você tem uma <em>missão em andamento</em>';
-    $('#subtitulo').textContent = 'O cronômetro continua correndo mesmo com a página fechada.';
-    $('#aberta').innerHTML = `<div class="aberta"><span class="ms" style="color:var(--ouro)">timer</span><b style="flex:1">${esc(ME.tentativaAberta.titulo)}</b><a class="btn btn-ouro btn-sm" href="/prova">Continuar</a></div>`;
-    $('#bt-catalogo').classList.add('oculto');
-  } else if (HIST.length) {
-    $('#titulo').innerHTML = 'De volta à <em>linha de frente</em>';
-  }
+  if (!ME.tentativaAberta) return;
+  $('#aberta').innerHTML = `<a class="aberta" href="/prova"><span class="ms">timer</span><span><b>${esc(ME.tentativaAberta.titulo)}</b> está em andamento. O cronômetro continua correndo.</span><span class="btn btn-ouro btn-sm">Continuar</span></a>`;
 }
 
 function montarPatente() {
@@ -61,62 +56,156 @@ function montarPatente() {
   contar($('#k-mat'), Object.keys(DES.porMateria || {}).length);
 }
 
-// ---------- catálogo ----------
-function montarFiltros() {
-  const ufs = [...new Set(SIMS.map(s => s.meta && s.meta.uf).filter(Boolean))].sort();
-  const bancas = [...new Set(SIMS.map(s => s.meta && s.meta.banca).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  $('#f-uf').innerHTML += ufs.map(u => `<option>${esc(u)}</option>`).join('');
-  $('#f-banca').innerHTML += bancas.map(b => `<option>${esc(b)}</option>`).join('');
-  const anos = [...new Set(SIMS.map(s => s.meta && s.meta.ano).filter(Boolean))].sort((a, b) => b - a);
-  $('#f-ano').innerHTML += anos.map(a => `<option>${esc(a)}</option>`).join('');
-  $('#f-tipo').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    fTipo = b.dataset.t; limite = 24;
-    $$('#f-tipo button').forEach(x => x.classList.toggle('on', x === b));
-    montarCatalogo();
-  });
-  let t;
-  $('#f-busca').addEventListener('input', e => { clearTimeout(t); t = setTimeout(() => { fBusca = e.target.value; limite = 24; montarCatalogo(); }, 200); });
-  $('#f-uf').addEventListener('change', e => { fUF = e.target.value; limite = 24; montarCatalogo(); });
-  $('#f-banca').addEventListener('change', e => { fBanca = e.target.value; limite = 24; montarCatalogo(); });
-  $('#f-ano').addEventListener('change', e => { fAno = e.target.value; limite = 24; montarCatalogo(); });
-  $('#mais').addEventListener('click', () => { limite += 24; montarCatalogo(); });
+// ---------- mapa: estado → cidades → provas ----------
+// posição de cada UF numa grade (cartograma do Brasil)
+const GRADE = {
+  RR: [2, 0], AP: [4, 0],
+  AM: [1, 1], PA: [3, 1], MA: [4, 1], CE: [5, 1], RN: [6, 1],
+  AC: [0, 2], RO: [1, 2], MT: [2, 2], TO: [3, 2], PI: [4, 2], PE: [5, 2], PB: [6, 2],
+  MS: [2, 3], GO: [3, 3], DF: [4, 3], BA: [5, 3], AL: [6, 3],
+  SP: [2, 4], MG: [3, 4], ES: [4, 4], SE: [5, 4],
+  PR: [2, 5], RJ: [3, 5],
+  SC: [2, 6],
+  RS: [2, 7],
+};
+const REGIOES = {
+  Sul: ['PR', 'SC', 'RS'], Sudeste: ['SP', 'RJ', 'MG', 'ES'], 'Centro-Oeste': ['DF', 'GO', 'MT', 'MS'],
+  Nordeste: ['BA', 'PE', 'CE', 'MA', 'PB', 'RN', 'AL', 'SE', 'PI'], Norte: ['PA', 'AM', 'RO', 'TO', 'AC', 'AP', 'RR'],
+};
+const NOME_UF = { AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins' };
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+let CIDADES = new Map(); // uf -> Map(cidade -> [simulados])
+
+function montarMapa() {
+  CIDADES = new Map();
+  for (const s of SIMS.filter(x => x.tipo === 'prova_real' && x.meta && x.meta.uf)) {
+    const uf = s.meta.uf, cid = s.meta.municipio || NOME_UF[uf] || uf;
+    if (!CIDADES.has(uf)) CIDADES.set(uf, new Map());
+    const m = CIDADES.get(uf);
+    if (!m.has(cid)) m.set(cid, []);
+    m.get(cid).push(s);
+  }
+  $('#brasil').innerHTML = Object.entries(GRADE).map(([uf, [x, y]], i) => {
+    const n = CIDADES.has(uf) ? CIDADES.get(uf).size : 0;
+    return `<button class="uf" data-uf="${uf}" style="grid-column:${x + 1};grid-row:${y + 1};--i:${i}" ${n ? '' : 'disabled'}
+      title="${NOME_UF[uf]}: ${n} ${n === 1 ? 'cidade' : 'cidades'}"><b>${uf}</b><small>${n || '–'}</small></button>`;
+  }).join('');
+  $('#regioes').innerHTML = Object.keys(REGIOES).map(r => `<button data-r="${r}">${r}</button>`).join('');
+  let salvo = ''; try { salvo = localStorage.getItem('uf') || ''; } catch (e) {}
+  const maior = [...CIDADES.entries()].sort((a, b) => b[1].size - a[1].size)[0];
+  escolherUF(CIDADES.has(salvo) ? salvo : (maior ? maior[0] : ''), false);
 }
 
-const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function escolherUF(uf, rolar = true) {
+  ufSel = uf; busca = ''; cidadeAberta = ''; $('#f-cidade').value = '';
+  try { localStorage.setItem('uf', uf); } catch (e) {}
+  $$('#brasil .uf').forEach(b => b.classList.toggle('on', b.dataset.uf === uf));
+  const reg = Object.keys(REGIOES).find(r => REGIOES[r].includes(uf));
+  $$('#regioes button').forEach(b => b.classList.toggle('on', b.dataset.r === reg));
+  $('#brasil').dataset.regiao = reg || '';
+  $$('#brasil .uf').forEach(b => b.classList.toggle('reg', !!reg && REGIOES[reg].includes(b.dataset.uf)));
+  listarCidades();
+  if (rolar) $('#cidades').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function listarCidades() {
+  let grupos;
+  if (busca) {
+    const q = norm(busca);
+    grupos = [...CIDADES.entries()].flatMap(([uf, m]) => [...m.entries()].filter(([c]) => norm(c).includes(q)).map(([c, l]) => [c, l, uf]));
+  } else {
+    grupos = [...(CIDADES.get(ufSel) || new Map()).entries()].map(([c, l]) => [c, l, ufSel]);
+  }
+  grupos.sort((a, b) => a[0].localeCompare(b[0]));
+  const tit = busca ? `Cidades com “${esc(busca)}”` : esc(NOME_UF[ufSel] || 'Escolha um estado');
+  const nProvas = grupos.reduce((n, g) => n + g[1].length, 0);
+  const abrir = grupos.length === 1 ? grupos[0][0] : cidadeAberta;
+  $('#cidades').innerHTML = `<header class="cid-cab"><h2>${tit}</h2><span>${grupos.length} ${grupos.length === 1 ? 'cidade' : 'cidades'}, ${nProvas} ${nProvas === 1 ? 'prova' : 'provas'}</span></header>
+    ${grupos.length ? `<div class="cid-lista">${grupos.map(([c, l, uf]) => `<button class="cid${c === abrir ? ' on' : ''}" data-cid="${esc(c)}" aria-expanded="${c === abrir}">
+        ${esc(c)}${busca ? ` <small>${uf}</small>` : ''}<span>${l.length}</span></button>`).join('')}</div>
+      <div id="cid-provas"></div>`
+    : `<p class="vazio">Nenhuma cidade encontrada. Tente outro nome ou escolha o estado no mapa.</p>`}`;
+  GRUPOS = grupos;
+  if (abrir) abrirCidade(abrir);
+}
+
+let GRUPOS = [], cidadeAberta = '';
+function abrirCidade(c) {
+  const g = GRUPOS.find(x => x[0] === c);
+  if (!g) return;
+  cidadeAberta = c;
+  $$('#cidades .cid').forEach(b => { const on = b.dataset.cid === c; b.classList.toggle('on', on); b.setAttribute('aria-expanded', on); });
+  $('#cid-provas').innerHTML = `<article class="cidade"><h3>${esc(c)} <small>${g[2]}</small></h3>
+    <ul>${g[1].sort((a, b) => (b.meta.ano || 0) - (a.meta.ano || 0)).map(linhaProva).join('')}</ul></article>`;
+}
+$('#cidades').addEventListener('click', e => {
+  const b = e.target.closest('.cid'); if (!b) return;
+  if (b.dataset.cid === cidadeAberta) { cidadeAberta = ''; b.classList.remove('on'); $('#cid-provas').innerHTML = ''; return; }
+  abrirCidade(b.dataset.cid);
+  $('#cid-provas').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+function botaoSim(s) {
+  const aberto = ME.tentativaAberta && ME.tentativaAberta.slug === s.slug;
+  if (aberto) return `<a class="btn btn-ouro btn-sm" href="/prova">Continuar</a>`;
+  if (s.proximaEm && new Date(s.proximaEm).getTime() > Date.now() - desvio) return `<span class="libera" title="1 tentativa a cada ${s.intervaloH}h">Libera ${fmtData(s.proximaEm)}</span>`;
+  return `<button class="btn btn-linha btn-sm" data-s="${esc(s.slug)}">${s.feitas ? 'Refazer' : 'Fazer'}</button>`;
+}
+
+function linhaProva(s) {
+  const extra = [s.meta.banca, s.subtitulo && s.subtitulo.split(' · ').slice(1).join(', ')].filter(Boolean).join(', ');
+  return `<li><span class="ano">${esc(s.meta.ano || '')}</span>
+    <span class="dados"><b>${esc(extra || 'Prova')}</b><small>${s.itens} questões em ${fmtDur(s.duracaoMin * 60)}${s.melhor != null ? `, sua melhor nota: ${s.melhor}` : ''}</small></span>
+    ${botaoSim(s)}</li>`;
+}
+
+$('#brasil').addEventListener('click', e => { const b = e.target.closest('.uf'); if (b) escolherUF(b.dataset.uf); });
+$('#regioes').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const uf = REGIOES[b.dataset.r].filter(u => CIDADES.has(u)).sort((a, c) => CIDADES.get(c).size - CIDADES.get(a).size)[0];
+  if (uf) escolherUF(uf);
+});
+let tBusca;
+$('#f-cidade').addEventListener('input', e => { clearTimeout(tBusca); tBusca = setTimeout(() => { busca = e.target.value.trim(); listarCidades(); }, 150); });
+
+// simulados montados pela Academia (tipo edital) ficam em destaque acima das cidades
+function montarAcademia() {
+  const l = SIMS.filter(s => s.tipo === 'edital');
+  const box = $('#academia');
+  box.classList.toggle('oculto', !l.length);
+  box.innerHTML = l.length ? `<h2>Simulados da Academia</h2><div class="acad">${l.map(s => `<article>
+    <div><b>${esc(s.titulo)}</b>${s.subtitulo ? `<p>${esc(s.subtitulo)}</p>` : ''}<small>${s.itens} questões em ${fmtDur(s.duracaoMin * 60)}</small></div>
+    ${botaoSim(s).replace('btn-linha', 'btn-ouro')}</article>`).join('')}</div>` : '';
+}
+
+// ---------- treinos por matéria, tema e banca ----------
+$('#f-tipo').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  fTipo = b.dataset.t;
+  $$('#f-tipo button').forEach(x => x.classList.toggle('on', x === b));
+  montarCatalogo();
+});
+
+function linhaTreino(s, nome) {
+  return `<li><span class="dados"><b>${esc(nome || s.titulo)}</b><small>${s.itens} questões${s.feitas ? `, feito ${s.feitas}x` : ''}</small></span>${botaoSim(s)}</li>`;
+}
 
 function montarCatalogo() {
-  const q = norm(fBusca);
-  const lista = SIMS.filter(s => (!fTipo || s.tipo === fTipo)
-    && (!fUF || (s.meta && s.meta.uf) === fUF)
-    && (!fBanca || (s.meta && s.meta.banca) === fBanca)
-    && (!fAno || String(s.meta && s.meta.ano) === fAno)
-    && (!q || norm([s.titulo, s.subtitulo, s.meta && s.meta.banca, s.meta && s.meta.municipio].join(' ')).includes(q)));
+  const l = SIMS.filter(s => s.tipo === fTipo);
   const box = $('#lista');
-  if (!lista.length) {
-    box.innerHTML = `<p class="vazio" style="grid-column:1/-1">${SIMS.length ? 'Nenhum simulado com esses filtros.' : 'Os simulados estão sendo preparados. Volte em breve!'}</p>`;
-    $('#mais').classList.add('oculto');
+  if (!l.length) { box.innerHTML = '<p class="vazio">Os treinos estão sendo preparados.</p>'; return; }
+  if (fTipo === 'tema') {
+    const por = new Map();
+    for (const s of l) { const m = (s.meta && s.meta.materia) || 'Outros'; if (!por.has(m)) por.set(m, []); por.get(m).push(s); }
+    box.innerHTML = `<div class="temas-grupos">${[...por.entries()].map(([m, x]) => `<details><summary>${esc(m)} <small>${x.length} temas</small></summary>
+      <ul class="linhas">${x.sort((a, b) => a.titulo.localeCompare(b.titulo)).map(s => linhaTreino(s)).join('')}</ul></details>`).join('')}</div>`;
     return;
   }
-  box.innerHTML = lista.slice(0, limite).map(s => {
-    const t = TIPOS[s.tipo] || TIPOS.livre;
-    const aberto = ME.tentativaAberta && ME.tentativaAberta.slug === s.slug;
-    const bloqueado = !aberto && s.proximaEm && new Date(s.proximaEm).getTime() > Date.now() - desvio;
-    let botao = `<button class="btn btn-ouro btn-sm" data-s="${esc(s.slug)}">${ms('play_arrow')}Iniciar</button>`;
-    if (aberto) botao = `<a class="btn btn-ouro btn-sm" href="/prova">${ms('timer')}Continuar</a>`;
-    else if (bloqueado) botao = `<span class="tag">${ms('schedule')}Libera ${fmtData(s.proximaEm)}</span>`;
-    return `<article class="sim ${s.destaque ? 'destaque' : ''}">
-      <div class="tp"><span class="tag ouro">${ms(t.ic)}${t.n}</span>${s.erroAnula ? '<span class="tag">Certo/Errado</span>' : ''}${s.feitas ? `<span class="tag ok">feito ${s.feitas}x</span>` : ''}</div>
-      <h4>${esc(s.titulo)}</h4>
-      ${s.subtitulo ? `<p>${esc(s.subtitulo)}</p>` : ''}
-      <div class="info"><span>${ms('quiz')}${s.itens} questões</span><span>${ms('timer')}${fmtDur(s.duracaoMin * 60)}</span>${s.melhor != null ? `<span>${ms('emoji_events')}melhor: ${s.melhor}</span>` : ''}</div>
-      <div class="rodape"><small>${s.intervaloH ? `1 tentativa a cada ${s.intervaloH}h` : 'Sem limite de tentativas'}</small>${botao}</div>
-    </article>`;
-  }).join('');
-  $('#mais').classList.toggle('oculto', lista.length <= limite);
+  box.innerHTML = `<ul class="linhas col2">${l.sort((a, b) => a.titulo.localeCompare(b.titulo)).map(s => linhaTreino(s, fTipo === 'banca' ? s.titulo.replace(/^Estilo /, '') : null)).join('')}</ul>`;
 }
 
-$('#lista').addEventListener('click', e => {
+// qualquer botão "Fazer" abre as regras do simulado
+document.addEventListener('click', e => {
   const b = e.target.closest('button[data-s]');
   if (!b) return;
   if (ME.tentativaAberta) return toast('Termine ou entregue o simulado em andamento antes de começar outro.', 'erro');
@@ -127,7 +216,7 @@ $('#lista').addEventListener('click', e => {
   $('#mr-regras').innerHTML = [
     `<b>${s.itens} questões</b> e <b>${fmtDur(s.duracaoMin * 60)}</b> de prova. O cronômetro corre mesmo se você fechar a página.`,
     `A prova abre em <b>tela cheia</b>. Trocar de aba, minimizar ou sair da tela cheia conta como saída: <b>na ${s.maxSaidas}ª, a prova é entregue</b>.`,
-    s.erroAnula ? 'Questões de certo/errado: <b>cada erro anula um acerto</b>. Na dúvida, deixe em branco.' : 'Questão em branco conta como erro na prática. Responda todas.',
+    s.erroAnula ? 'Questões de certo/errado: <b>cada erro anula um acerto</b>. Na dúvida, deixe em branco.' : 'Questão em branco não pontua. Responda todas.',
     s.intervaloH ? `Depois de começar, a próxima tentativa deste simulado libera em <b>${s.intervaloH} horas</b>.` : 'Você pode refazer este treino quando quiser.',
   ].map(x => `<li>${x}</li>`).join('');
   $('#ck-regras').checked = false;

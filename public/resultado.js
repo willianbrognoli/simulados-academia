@@ -42,6 +42,7 @@ async function carregar() {
   };
   if (avisos[R.motivo_fim]) { $('#r-aviso').textContent = avisos[R.motivo_fim]; $('#r-aviso').classList.remove('oculto'); }
   anel($('#ring'), R.nota, R.total, R.erroAnula ? 'nota líquida' : 'acertos');
+  renderTreino($('#treino'), R.por_materia);
   renderBarras($('#materias'), R.por_materia, null, false);
   renderFoco($('#bem'), $('#mal'), R.por_tema, R.dicas);
   revisao();
@@ -72,7 +73,7 @@ function revisao() {
       <p class="enun">${fmt(q.enunciado)}</p>
       ${htmlMidia(q.midia)}
       <div class="alts ${ce ? 'ce' : ''}">${alts}</div>
-      <div class="coment">${q.comentario ? `<b>Comentário:</b> ${esc(q.comentario)}` : '<b>Comentário:</b> em produção pela equipe da Academia.'}</div>
+      <div class="coment">${q.comentario ? `<b>Comentário:</b> ${fmt(q.comentario)}` : '<b>Comentário:</b> em produção pela equipe da Academia.'}</div>
     </article>`;
   }).join('') : '<p class="vazio">Nenhuma questão nesta categoria.</p>';
   mat($('#revisao'));

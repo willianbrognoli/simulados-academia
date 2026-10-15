@@ -122,6 +122,28 @@ function renderBarras(box, dados, anterior, mostrarMateria = true) {
   setTimeout(() => $$('.barra i[data-w]', box).forEach(i => { i.style.width = Math.max(3, i.dataset.w) + '%'; }), 150);
 }
 
+// matérias abaixo de 60% viram atalho de treino (as 3 piores)
+function renderTreino(box, porMateria) {
+  const fracas = Object.entries(porMateria || {}).map(([m, x]) => ({ m, p: pct(x.certos, x.total), x }))
+    .filter(l => l.p < 60 && l.x.total >= 2).sort((a, b) => a.p - b.p).slice(0, 3);
+  box.classList.toggle('oculto', !fracas.length);
+  if (!fracas.length) return;
+  box.innerHTML = `<h3>${ms('fitness_center')}Treine onde você perdeu pontos</h3>
+    <p class="sub">20 questões só da matéria, sem limite de tentativas.</p>
+    <div class="treinos">${fracas.map(l => `<button class="treino" data-treino="${esc(l.m)}">
+      <span class="pc ${classe(l.p).c}">${l.p}%</span><b>${esc(l.m)}</b><small>${l.x.certos} de ${l.x.total} certas</small>
+      <span class="ir">${ms('arrow_forward')}Treinar agora</span></button>`).join('')}</div>`;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-treino]');
+  if (!b || b.disabled) return;
+  b.disabled = true;
+  try {
+    await api('/api/treino', { method: 'POST', body: { materia: b.dataset.treino } });
+    location.href = '/prova';
+  } catch (er) { toast(er.message, 'erro'); b.disabled = false; }
+});
+
 // pontos fortes e prioridades de estudo
 function renderFoco(boxBem, boxMal, dados, dicas = {}) {
   const lista = Object.keys(dados || {}).map(k => ({ k, p: pct(dados[k].certos, dados[k].total), x: dados[k] }));

@@ -7,7 +7,7 @@
 <link rel="icon" href="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
 <script src="/tema.js"></script>
 <link rel="stylesheet" href="/vendor/katex/katex.min.css">
@@ -35,6 +35,7 @@
   <header class="topo">
     <div class="in">
       <a class="marca-ap" href="/admin"><img src="https://academiadepolicia.com.br/wp-content/uploads/2026/04/brasao-academia-de-policia-em-fundo.png" alt=""><b>Academia de Polícia<small>Revisão de questões</small></b></a>
+      <nav class="seg adm-abas" id="abas"><button data-aba="questoes" class="on">Questões</button><button data-aba="simulados">Simulados</button></nav>
       <span class="sp"></span>
       <span class="ola" id="resumo"></span>
       <button class="btn btn-linha btn-sm" id="sair"><span class="ms">logout</span>Sair</button>
@@ -51,9 +52,21 @@
           <option value="extraida">Extraídas (sem triagem)</option>
         </select>
         <select id="f-materia" aria-label="Matéria"><option value="">Todas as matérias</option></select>
+        <select id="f-coment" aria-label="Comentário">
+          <option value="">Qualquer comentário</option>
+          <option value="ia_revisar">Comentário da IA para revisar</option>
+          <option value="ia_aprovado">Comentário da IA aprovado automaticamente</option>
+          <option value="humano">Comentário revisado pela equipe</option>
+        </select>
         <div class="busca"><span class="ms">search</span><input id="f-q" placeholder="Código ou trecho do enunciado"></div>
       </div>
-      <p class="sub" id="contagem"></p>
+      <div class="adm-lote">
+        <label class="check"><input type="checkbox" id="sel-todas"> <span id="contagem"></span></label>
+        <span class="sp"></span>
+        <button class="btn btn-linha btn-sm" id="lote-aprovar" disabled title="Aprovar selecionadas"><span class="ms">check_circle</span></button>
+        <button class="btn btn-linha btn-sm adm-rem" id="lote-tirar" disabled title="Tirar selecionadas"><span class="ms">block</span></button>
+        <button class="btn btn-linha btn-sm" id="lote-cesta" disabled title="Pôr no simulado em montagem"><span class="ms">playlist_add</span></button>
+      </div>
       <div id="lista"></div>
       <div class="adm-pag">
         <button class="btn btn-linha btn-sm" id="ant">Anterior</button>
@@ -63,12 +76,22 @@
     </section>
 
     <section class="adm-editor card" id="editor">
-      <p class="vazio">Escolha uma questão na lista.</p>
+      <p class="vazio">Escolha uma questão na lista.<br><small>Atalhos no editor: Ctrl+Enter salva e aprova · Ctrl+S salva.</small></p>
     </section>
+  </main>
+
+  <main class="adm oculto" id="aba-simulados">
+    <section class="adm-lista card">
+      <button class="btn btn-ouro w100" id="sim-novo"><span class="ms">add</span>Novo simulado</button>
+      <p class="sub" style="margin:12px 0 6px">Simulados da Academia</p>
+      <div id="sim-lista"></div>
+    </section>
+    <section class="adm-editor card" id="sim-form"></section>
   </main>
 </div>
 
 <script src="/ui.js"></script>
 <script src="/admin.js"></script>
+<script src="/admin-simulados.js"></script>
 </body>
 </html>

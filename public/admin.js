@@ -26,7 +26,22 @@ $('#f-login').addEventListener('submit', async e => {
   try {
     await adm('/api/admin/login', { method: 'POST', body: { senha: e.target.senha.value } });
     e.target.reset();
-    iniciar();
+    document.addEventListener('keydown', e => {
+  if (!atual || !(e.ctrlKey || e.metaKey) || !$('#e-enun')) return;
+  if (e.key === 'Enter') { e.preventDefault(); $('#editor [data-a=aprovar]').click(); }
+  if (e.key.toLowerCase() === 's') { e.preventDefault(); $('#editor [data-a=salvar]').click(); }
+});
+
+// abas
+$('#abas').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $$('#abas button').forEach(x => x.classList.toggle('on', x === b));
+  $('#tela-painel > main.adm:not(#aba-simulados)').classList.toggle('oculto', b.dataset.aba !== 'questoes');
+  $('#aba-simulados').classList.toggle('oculto', b.dataset.aba !== 'simulados');
+  if (b.dataset.aba === 'simulados' && window.abrirSimulados) window.abrirSimulados();
+});
+
+iniciar();
   } catch (x) { $('#login-erro').textContent = x.message; }
 });
 $('#sair').addEventListener('click', async () => { await adm('/api/admin/logout', { method: 'POST' }); mostrarLogin(); });
@@ -40,6 +55,7 @@ async function resumo() {
 async function carregar() {
   const q = new URLSearchParams({ status: $('#f-status').value, limite: POR_PAG, offset });
   if ($('#f-materia').value) q.set('materia', $('#f-materia').value);
+  if ($('#f-coment').value) q.set('comentario', $('#f-coment').value);
   if ($('#f-q').value.trim()) q.set('q', $('#f-q').value.trim());
   $('#lista').innerHTML = '<p class="vazio">Carregando…</p>';
   const r = await adm('/api/admin/itens?' + q);
@@ -48,17 +64,47 @@ async function carregar() {
   $('#pag').textContent = total ? `${offset + 1}–${Math.min(offset + POR_PAG, total)}` : '';
   $('#ant').disabled = offset === 0;
   $('#prox').disabled = offset + POR_PAG >= total;
+  SEL.clear(); marcarLote();
   $('#lista').innerHTML = ITENS.length ? ITENS.map((it, i) => `
-    <button class="adm-item${atual && atual.codigo === it.codigo ? ' on' : ''}" data-i="${i}">
-      <b>${esc(it.codigo)}</b>
+    <div class="adm-item${atual && atual.codigo === it.codigo ? ' on' : ''}" data-i="${i}">
+      <input type="checkbox" class="sel" aria-label="Selecionar ${esc(it.codigo)}">
+      <div class="txt"><b>${esc(it.codigo)}</b>
       <span>${esc(it.materia || 'sem matéria')}${it.tema ? ' › ' + esc(it.tema) : ''}</span>
-      <small>${esc((it.enunciado || '').replace(/__/g, '').slice(0, 110))}…</small>
-    </button>`).join('') : '<p class="vazio">Nenhuma questão aqui.</p>';
+      <small>${esc((it.enunciado || '').replace(/__/g, '').slice(0, 110))}…</small></div>
+      <div class="rap">${it.status !== 'aprovada' ? `<button data-rap="aprovada" title="Aprovar">${ms('check')}</button>` : ''}${it.status !== 'removida' ? `<button data-rap="removida" title="Tirar">${ms('block')}</button>` : ''}</div>
+    </div>`).join('') : '<p class="vazio">Nenhuma questão aqui.</p>';
 }
+
+// ---- seleção em lote e ações rápidas ----
+const SEL = new Set();
+function marcarLote() {
+  ['#lote-aprovar', '#lote-tirar', '#lote-cesta'].forEach(s => { $(s).disabled = !SEL.size; });
+  $('#sel-todas').checked = SEL.size && SEL.size === ITENS.length;
+  $('#contagem').textContent = SEL.size ? `${SEL.size} selecionada(s)` : `${total} questões`;
+}
+$('#sel-todas').addEventListener('change', e => {
+  SEL.clear();
+  $$('#lista .sel').forEach((c, i) => { c.checked = e.target.checked; if (c.checked) SEL.add(ITENS[i].codigo); });
+  marcarLote();
+});
+async function lote(codigos, status) {
+  let motivo;
+  if (status === 'removida') { motivo = prompt('Motivo (ex.: anulada, lei alterada, depende de imagem, erro na prova):', 'erro na questão'); if (motivo === null) return; }
+  const r = await adm('/api/admin/itens/lote', { method: 'POST', body: { codigos, status, motivo_remocao: motivo } });
+  toast(`${r.alterados} questão(ões) ${status === 'aprovada' ? 'aprovada(s)' : 'tirada(s) do ar'}${r.semGabarito ? ` · ${r.semGabarito} sem gabarito ficaram de fora` : ''}.`, 'ok');
+  resumo(); carregar();
+}
+$('#lote-aprovar').addEventListener('click', () => lote([...SEL], 'aprovada'));
+$('#lote-tirar').addEventListener('click', () => lote([...SEL], 'removida'));
+$('#lote-cesta').addEventListener('click', () => { window.cesta && window.cesta([...SEL]); });
 
 $('#lista').addEventListener('click', e => {
   const b = e.target.closest('.adm-item');
   if (!b) return;
+  const it = ITENS[Number(b.dataset.i)];
+  if (e.target.classList.contains('sel')) { e.target.checked ? SEL.add(it.codigo) : SEL.delete(it.codigo); return marcarLote(); }
+  const rap = e.target.closest('[data-rap]');
+  if (rap) return lote([it.codigo], rap.dataset.rap);
   $$('.adm-item').forEach(x => x.classList.toggle('on', x === b));
   editar(ITENS[Number(b.dataset.i)]);
 });
@@ -66,6 +112,7 @@ let tBusca;
 $('#f-q').addEventListener('input', () => { clearTimeout(tBusca); tBusca = setTimeout(() => { offset = 0; carregar(); }, 350); });
 $('#f-status').addEventListener('change', () => { offset = 0; carregar(); });
 $('#f-materia').addEventListener('change', () => { offset = 0; carregar(); });
+$('#f-coment').addEventListener('change', () => { offset = 0; carregar(); });
 $('#ant').addEventListener('click', () => { offset = Math.max(0, offset - POR_PAG); carregar(); });
 $('#prox').addEventListener('click', () => { offset += POR_PAG; carregar(); });
 
@@ -92,12 +139,16 @@ function editar(it) {
       <label>Matéria<select id="e-mat">${opt('', '—', !it.materia)}${TAX.map(m => opt(m.nome, m.nome, m.nome === it.materia)).join('')}</select></label>
       <label>Tema<select id="e-tema"></select></label>
     </div>
-    <label>Comentário para o aluno<textarea id="e-com" rows="3">${esc(it.comentario || '')}</textarea></label>
+    <label>Comentário para o aluno ${{ ia_revisar: '<span class="tag mid">IA, aguardando revisão</span>', ia_aprovado: '<span class="tag ok">IA, aprovado automaticamente</span>', humano: '<span class="tag">revisado pela equipe</span>' }[it.comentario_status] || ''}
+      ${it.comentario_nota ? `<small class="coment-nota">Por que veio para revisão: ${esc(it.comentario_nota)}</small>` : ''}
+      <textarea id="e-com" rows="6">${esc(it.comentario || '')}</textarea>
+      <small>Ao salvar, o comentário passa a valer como revisado pela equipe e aparece para o aluno.</small></label>
     <div class="adm-acoes">
       <button class="btn btn-ouro" data-a="aprovar"><span class="ms">check_circle</span>Salvar e aprovar</button>
       <button class="btn btn-linha" data-a="salvar"><span class="ms">save</span>Salvar</button>
       <button class="btn btn-linha" data-a="revisar"><span class="ms">flag</span>Deixar para revisar</button>
       <button class="btn btn-linha adm-rem" data-a="remover"><span class="ms">delete</span>Remover</button>
+      <button class="btn btn-linha" data-a="cesta"><span class="ms">playlist_add</span>Pôr no simulado</button>
     </div>
     <p class="adm-erro" id="e-erro"></p>
     <h3 class="adm-prev-t"><span class="ms">visibility</span>Como o aluno vê</h3>
@@ -137,6 +188,7 @@ $('#editor').addEventListener('click', async e => {
   const b = e.target.closest('[data-a]');
   if (!b || !atual) return;
   const a = b.dataset.a;
+  if (a === 'cesta') return window.cesta && window.cesta([atual.codigo]);
   const corpo = lerForm();
   if (a === 'aprovar') {
     if (!corpo.gabarito) return ($('#e-erro').textContent = 'Defina o gabarito antes de aprovar.');
@@ -162,6 +214,21 @@ $('#editor').addEventListener('click', async e => {
     } else editar(atual);
   } catch (x) { $('#e-erro').textContent = x.message; }
   b.disabled = false;
+});
+
+document.addEventListener('keydown', e => {
+  if (!atual || !(e.ctrlKey || e.metaKey) || !$('#e-enun')) return;
+  if (e.key === 'Enter') { e.preventDefault(); $('#editor [data-a=aprovar]').click(); }
+  if (e.key.toLowerCase() === 's') { e.preventDefault(); $('#editor [data-a=salvar]').click(); }
+});
+
+// abas
+$('#abas').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $$('#abas button').forEach(x => x.classList.toggle('on', x === b));
+  $('#tela-painel > main.adm:not(#aba-simulados)').classList.toggle('oculto', b.dataset.aba !== 'questoes');
+  $('#aba-simulados').classList.toggle('oculto', b.dataset.aba !== 'simulados');
+  if (b.dataset.aba === 'simulados' && window.abrirSimulados) window.abrirSimulados();
 });
 
 iniciar();

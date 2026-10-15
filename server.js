@@ -123,7 +123,7 @@ function admin(req, res, next) {
 async function carregarItens(db, ids) {
   if (!ids.length) return new Map();
   const { rows } = await db.query(
-    `SELECT i.id, i.codigo, i.numero_original, i.formato, i.enunciado, i.alternativas, i.midia, i.gabarito, i.comentario,
+    `SELECT i.id, i.codigo, i.numero_original, i.formato, i.enunciado, i.alternativas, i.midia, i.gabarito, i.comentario, i.comentario_status,
             i.escopo, tb.id AS tb_id, tb.conteudo AS texto_base, m.nome AS materia, t.nome AS tema, t.dica,
             c.municipio, c.uf, c.ano, c.orgao, c.cargo, b.nome AS banca, p.caderno
      FROM itens i JOIN provas p ON p.id = i.prova_id JOIN concursos c ON c.id = p.concurso_id
@@ -272,7 +272,20 @@ app.get('/api/simulados', auth, h(async (req, res) => {
 app.post('/api/simulados/:slug/tentativas', auth, h(async (req, res) => {
   const sim = await pool.query('SELECT * FROM simulados WHERE slug = $1 AND ativo', [req.params.slug]);
   if (!sim.rows[0]) return erro(res, 'Simulado não encontrado.', 404);
-  const s = sim.rows[0], regras = S.normalizarRegras(s.regras);
+  await iniciarTentativa(req, res, sim.rows[0]);
+}));
+
+// treino de uma matéria (botão "treinar" nos pontos fracos): usa o simulado "por matéria" dela
+app.post('/api/treino', auth, h(async (req, res) => {
+  const materia = String((req.body || {}).materia || '');
+  const sim = await pool.query(
+    `SELECT * FROM simulados WHERE ativo AND tipo = 'materia' AND total_itens > 0 AND regras->'filtros'->'materias' ? $1 LIMIT 1`, [materia]);
+  if (!sim.rows[0]) return erro(res, 'Ainda não há treino desta matéria.', 404);
+  await iniciarTentativa(req, res, sim.rows[0]);
+}));
+
+async function iniciarTentativa(req, res, s) {
+  const regras = S.normalizarRegras(s.regras);
   const c = await pool.connect();
   try {
     await c.query('BEGIN');
@@ -307,7 +320,7 @@ app.post('/api/simulados/:slug/tentativas', auth, h(async (req, res) => {
     await c.query('ROLLBACK').catch(() => {});
     throw e;
   } finally { c.release(); }
-}));
+}
 
 // ----- prova -----
 app.get('/api/tentativas/atual', auth, h(async (req, res) => {
@@ -425,7 +438,7 @@ app.get('/api/tentativas/:id', auth, h(async (req, res) => {
       return {
         n: i + 1, formato: q.formato, materia: q.materia, tema: q.tema, enunciado: q.enunciado, alternativas: q.alternativas,
         midia: q.midia, textoBase: q.texto_base, origem: origem(q),
-        resposta: t.respostas[id] || null, gabarito: q.gabarito, comentario: q.comentario,
+        resposta: t.respostas[id] || null, gabarito: q.gabarito, comentario: q.comentario_status === 'ia_revisar' ? null : q.comentario,
       };
     }).filter(Boolean),
   });
@@ -539,6 +552,7 @@ app.get('/api/admin/itens', admin, h(async (req, res) => {
   const off = Math.max(0, Number(req.query.offset) || 0);
   const w = ['i.status = ANY($1)'], p = [st];
   if (req.query.materia) { p.push(String(req.query.materia)); w.push(`m.nome = $${p.length}`); }
+  if (req.query.comentario) { p.push(String(req.query.comentario)); w.push(`i.comentario_status = $${p.length}`); }
   if (req.query.q) { p.push('%' + String(req.query.q).trim() + '%'); w.push(`(i.codigo ILIKE $${p.length} OR i.enunciado ILIKE $${p.length})`); }
   const where = w.join(' AND ');
   const base = `FROM itens i JOIN provas p ON p.id = i.prova_id JOIN concursos c ON c.id = p.concurso_id
@@ -547,7 +561,7 @@ app.get('/api/admin/itens', admin, h(async (req, res) => {
   const [tot, { rows }] = await Promise.all([
     pool.query(`SELECT count(*)::int AS n ${base}`, p),
     pool.query(`SELECT i.codigo, i.status, i.formato, i.numero_original, i.enunciado, i.alternativas, i.gabarito, i.escopo, i.escopo_local,
-            i.alertas, i.comentario, i.motivo_remocao, m.nome AS materia, t.nome AS tema, tb.conteudo AS texto_base,
+            i.alertas, i.comentario, i.comentario_status, i.comentario_nota, i.motivo_remocao, m.nome AS materia, t.nome AS tema, tb.conteudo AS texto_base,
             c.slug AS concurso, c.municipio, c.uf, c.ano, b.nome AS banca, p.arquivo
      ${base} ORDER BY c.slug, i.numero_original LIMIT ${lim} OFFSET ${off}`, p)]);
   res.json({ total: tot.rows[0].n, itens: rows });
@@ -563,7 +577,7 @@ app.patch('/api/admin/itens/:codigo', admin, h(async (req, res) => {
     set('status', b.status);
     set('motivo_remocao', b.status === 'removida' ? (b.motivo_remocao || 'outro') : null);
   }
-  if ('comentario' in b) set('comentario', b.comentario || null);
+  if ('comentario' in b) { set('comentario', b.comentario || null); set('comentario_status', b.comentario ? 'humano' : null); set('comentario_nota', null); }
   if ('gabarito' in b) set('gabarito', b.gabarito ? String(b.gabarito).toUpperCase() : null);
   if (b.escopo) set('escopo', b.escopo);
   if ('escopo_local' in b) set('escopo_local', b.escopo_local || null);
@@ -587,6 +601,82 @@ app.patch('/api/admin/itens/:codigo', admin, h(async (req, res) => {
   if (!r.rows[0]) return erro(res, 'Item não encontrado.', 404);
   S.atualizarContagens(pool).catch(e => console.error('recontagem:', e.message));
   res.json(r.rows[0]);
+}));
+
+// comentários em lote (gerados fora da plataforma): [{codigo, comentario, status: ia_aprovado|ia_revisar, nota}]
+app.post('/api/admin/comentarios', admin, h(async (req, res) => {
+  const lista = Array.isArray(req.body) ? req.body : [];
+  let n = 0;
+  for (const c of lista) {
+    if (!c || !c.codigo || !String(c.comentario || '').trim() || !['ia_aprovado', 'ia_revisar'].includes(c.status)) continue;
+    // nunca sobrescreve comentário que um humano já escreveu ou aprovou
+    const r = await pool.query(
+      `UPDATE itens SET comentario = $2, comentario_status = $3, comentario_nota = $4
+       WHERE codigo = $1 AND (comentario_status IS NULL OR comentario_status LIKE 'ia_%') AND (comentario IS NULL OR comentario_status IS NOT NULL)`,
+      [String(c.codigo), String(c.comentario).trim(), c.status, c.nota ? String(c.nota) : null]);
+    n += r.rowCount;
+  }
+  res.json({ gravados: n, recebidos: lista.length });
+}));
+
+// aprovar / tirar várias questões de uma vez
+app.post('/api/admin/itens/lote', admin, h(async (req, res) => {
+  const b = req.body || {};
+  const codigos = (Array.isArray(b.codigos) ? b.codigos : []).map(String).slice(0, 500);
+  if (!codigos.length || !['aprovada', 'revisar', 'removida'].includes(b.status)) return erro(res, 'Informe as questões e a ação.');
+  const r = await pool.query(
+    `UPDATE itens SET status = $2, motivo_remocao = $3, atualizado_em = now()
+     WHERE codigo = ANY($1) AND ($2 <> 'aprovada' OR gabarito IS NOT NULL) RETURNING codigo`,
+    [codigos, b.status, b.status === 'removida' ? (b.motivo_remocao || 'outro') : null]);
+  S.atualizarContagens(pool).catch(e => console.error('recontagem:', e.message));
+  res.json({ alterados: r.rowCount, semGabarito: codigos.length - r.rowCount });
+}));
+
+// ----- simulados montados à mão (tipo edital = "da Academia", aparece em destaque) -----
+app.get('/api/admin/simulados', admin, h(async (req, res) => {
+  const { rows } = await pool.query(
+    `SELECT slug, titulo, subtitulo, tipo, regras, meta, ativo, destaque, total_itens, criado_em
+     FROM simulados WHERE tipo IN ('edital', 'livre') ORDER BY criado_em DESC`);
+  res.json(rows);
+}));
+
+app.post('/api/admin/simulados', admin, h(async (req, res) => {
+  const b = req.body || {};
+  const titulo = String(b.titulo || '').trim();
+  if (titulo.length < 3) return erro(res, 'Dê um título ao simulado.');
+  const regras = {
+    duracao_min: Number(b.duracao_min) || null, intervalo_h: Number(b.intervalo_h) || 0,
+    max_saidas: Number(b.max_saidas) || 3, erro_anula: !!b.erro_anula, filtros: {},
+  };
+  const meta = { montado: b.modo, municipio: b.municipio || null, uf: b.uf || null };
+  if (b.modo === 'itens') {
+    const codigos = (Array.isArray(b.codigos) ? b.codigos : []).map(String);
+    const { rows } = await pool.query('SELECT id, codigo FROM itens WHERE codigo = ANY($1)', [codigos]);
+    const id = new Map(rows.map(r => [r.codigo, r.id]));
+    regras.filtros.item_ids = codigos.filter(c => id.has(c)).map(c => id.get(c));
+    if (!regras.filtros.item_ids.length) return erro(res, 'Escolha ao menos uma questão.');
+    regras.ordem = 'fixa';
+    meta.codigos = codigos.filter(c => id.has(c));
+  } else {
+    const cotas = {};
+    for (const [m, n] of Object.entries(b.cotas || {})) if (Number(n) > 0) cotas[String(m)] = Math.min(200, Number(n));
+    if (!Object.keys(cotas).length) return erro(res, 'Escolha ao menos uma matéria e quantas questões.');
+    regras.cotas = cotas;
+    regras.ordem = 'materia';
+    if (b.municipio) regras.filtros.municipio = String(b.municipio);
+  }
+  const reg = S.normalizarRegras(regras);
+  const total = await S.contarPool(pool, reg);
+  const slugNovo = b.slug || 'academia-' + require('./lib/taxonomia').slug(titulo) + '-' + Date.now().toString(36);
+  const { rows } = await pool.query(
+    `INSERT INTO simulados (slug, titulo, subtitulo, tipo, regras, meta, ativo, destaque, ordem, total_itens)
+     VALUES ($1,$2,$3,'edital',$4,$5,$6,$7,10,$8)
+     ON CONFLICT (slug) DO UPDATE SET titulo = EXCLUDED.titulo, subtitulo = EXCLUDED.subtitulo, regras = EXCLUDED.regras,
+       meta = EXCLUDED.meta, ativo = EXCLUDED.ativo, destaque = EXCLUDED.destaque, total_itens = EXCLUDED.total_itens
+     WHERE simulados.tipo IN ('edital', 'livre') RETURNING slug, total_itens`,
+    [slugNovo, titulo, String(b.subtitulo || '').trim() || null, reg, meta, b.ativo !== false, !!b.destaque, total]);
+  if (!rows[0]) return erro(res, 'Esse simulado é automático e não pode ser editado aqui.', 409);
+  res.json(rows[0]);
 }));
 
 app.post('/api/admin/recontar', admin, h(async (req, res) => res.json({ simulados: await S.atualizarContagens(pool) })));
