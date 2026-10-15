@@ -2,7 +2,6 @@
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const { pool, init } = require('./db');
 const S = require('./lib/simulados');
 const { importarInventario, importarQuestoes, garantirMateria, garantirTema } = require('./lib/importar');
@@ -14,6 +13,7 @@ const PROD = process.env.NODE_ENV === 'production';
 const SECRET = process.env.SESSION_SECRET || '';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
 const MIDIA_DIR = process.env.MIDIA_DIR || path.join(__dirname, 'midia');
+const FB_PROJETO = process.env.FIREBASE_PROJECT_ID || 'simulados-academia';
 const IMG_HOSTS = (process.env.IMG_HOSTS || 'https://academiadepolicia.com.br').split(/\s+/).filter(Boolean).join(' ');
 if (SECRET.length < 32) {
   console.error('Defina a variável SESSION_SECRET com pelo menos 32 caracteres.');
@@ -58,6 +58,38 @@ function setSessao(res, alunoId) {
   const dias = 7;
   const tok = assinar({ id: alunoId, exp: Date.now() + dias * 864e5 });
   res.setHeader('Set-Cookie', `sid=${tok}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${dias * 86400}${PROD ? '; Secure' : ''}`);
+}
+
+// ---------------- login Firebase ----------------
+// Confere o ID token do Firebase (JWT RS256) com as chaves públicas do Google, sem SDK.
+let certs = { exp: 0, chaves: {} };
+async function certsFirebase() {
+  if (certs.exp > Date.now()) return certs.chaves;
+  const r = await fetch('https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com');
+  if (!r.ok) throw new Error('Não foi possível obter as chaves do Firebase.');
+  const idade = Number((r.headers.get('cache-control') || '').match(/max-age=(\d+)/)?.[1] || 3600);
+  certs = { chaves: await r.json(), exp: Date.now() + idade * 1000 };
+  return certs.chaves;
+}
+async function tokenFirebase(tok) {
+  const [h64, p64, s64] = String(tok || '').split('.');
+  if (!s64) return null;
+  let cab, c;
+  try { cab = JSON.parse(Buffer.from(h64, 'base64url')); c = JSON.parse(Buffer.from(p64, 'base64url')); } catch { return null; }
+  const pem = cab.alg === 'RS256' && (await certsFirebase())[cab.kid];
+  if (!pem) return null;
+  const chave = new crypto.X509Certificate(pem).publicKey;
+  if (!crypto.verify('RSA-SHA256', Buffer.from(`${h64}.${p64}`), chave, Buffer.from(s64, 'base64url'))) return null;
+  const agora = Date.now() / 1000;
+  if (c.aud !== FB_PROJETO || c.iss !== `https://securetoken.google.com/${FB_PROJETO}` || !c.sub || c.exp < agora || c.iat > agora + 300) return null;
+  return c;
+}
+// token válido e e-mail confirmado (Google já vem confirmado)
+async function contaFirebase(req, res) {
+  const c = await tokenFirebase((req.body || {}).idToken);
+  if (!c) { erro(res, 'Login inválido ou expirado. Entre novamente.', 401); return null; }
+  if (!c.email || !c.email_verified) { res.status(403).json({ erro: 'Confirme seu e-mail pelo link que enviamos antes de entrar.', verificar: true }); return null; }
+  return c;
 }
 
 // limitador simples para login/cadastro
@@ -140,8 +172,10 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    `font-src 'self' https://fonts.gstatic.com; img-src 'self' data: ${IMG_HOSTS}; connect-src 'self'; ` +
+    "default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    `font-src 'self' https://fonts.gstatic.com; img-src 'self' data: ${IMG_HOSTS}; ` +
+    "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; " +
+    `frame-src https://${FB_PROJETO}.firebaseapp.com; ` +
     "frame-ancestors 'none'; base-uri 'self'; form-action 'self'");
   if (PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   next();
@@ -154,36 +188,39 @@ app.use('/api', jsonPequeno);
 app.get('/health', h(async (req, res) => { await pool.query('SELECT 1'); res.json({ ok: true }); }));
 
 // ----- conta -----
+// 1) depois do login no Firebase: entra se a conta já existe; senão pede o cadastro (CPF etc.)
+app.post('/api/entrar', limitar(30, 15 * 60e3), h(async (req, res) => {
+  const c = await contaFirebase(req, res);
+  if (!c) return;
+  const { rows } = await pool.query('SELECT id FROM alunos WHERE firebase_uid = $1', [c.sub]);
+  if (rows[0]) { setSessao(res, rows[0].id); return res.json({ ok: true }); }
+  res.json({ cadastro: true, nome: c.name || '', email: c.email });
+}));
+
+// 2) primeiro acesso: completa o cadastro. Uma conta por CPF (UNIQUE no banco).
 app.post('/api/cadastro', limitar(10, 15 * 60e3), h(async (req, res) => {
+  const c = await contaFirebase(req, res);
+  if (!c) return;
   const b = req.body || {};
   const nome = String(b.nome || '').trim().replace(/\s+/g, ' ');
   const cpf = String(b.cpf || '').replace(/\D/g, '');
-  const email = String(b.email || '').trim().toLowerCase();
   const whatsapp = String(b.whatsapp || '').replace(/\D/g, '');
-  const senha = String(b.senha || '');
+  const email = String(c.email).toLowerCase();
   if (nome.length < 5 || nome.length > 120 || !nome.includes(' ')) return erro(res, 'Informe seu nome completo.');
   if (!cpfValido(cpf)) return erro(res, 'CPF inválido. Confira os números digitados.');
-  if (email.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return erro(res, 'E-mail inválido.');
   if (whatsapp.length < 10 || whatsapp.length > 11) return erro(res, 'WhatsApp inválido. Informe DDD + número.');
-  if (senha.length < 6 || senha.length > 72) return erro(res, 'A senha precisa ter pelo menos 6 caracteres.');
-  const hash = await bcrypt.hash(senha, 10);
+  // conta antiga (CPF + senha) com o mesmo e-mail: só vincula
+  let { rows } = await pool.query(
+    'UPDATE alunos SET firebase_uid = $1 WHERE cpf = $2 AND firebase_uid IS NULL AND lower(email) = $3 RETURNING id', [c.sub, cpf, email]);
   try {
-    const { rows } = await pool.query(
-      'INSERT INTO alunos (nome, cpf, email, whatsapp, senha_hash) VALUES ($1,$2,$3,$4,$5) RETURNING id',
-      [nome, cpf, email, whatsapp, hash]);
-    setSessao(res, rows[0].id);
-    res.json({ ok: true });
+    if (!rows[0]) ({ rows } = await pool.query(
+      'INSERT INTO alunos (nome, cpf, email, whatsapp, firebase_uid) VALUES ($1,$2,$3,$4,$5) RETURNING id',
+      [nome, cpf, email, whatsapp, c.sub]));
   } catch (e) {
-    if (e.code === '23505') return erro(res, 'Este CPF já tem cadastro. Use a aba Entrar.', 409);
-    throw e;
+    if (e.code !== '23505') throw e;
+    if (/cpf/.test(e.constraint)) return erro(res, 'Este CPF já tem uma conta. Entre com o e-mail ou a conta Google usados no cadastro. Se não lembra, fale com a equipe.', 409);
+    return erro(res, 'Esta conta já está cadastrada. Entre novamente.', 409);
   }
-}));
-
-app.post('/api/login', limitar(10, 15 * 60e3), h(async (req, res) => {
-  const cpf = String((req.body || {}).cpf || '').replace(/\D/g, '');
-  const senha = String((req.body || {}).senha || '');
-  const { rows } = await pool.query('SELECT id, senha_hash FROM alunos WHERE cpf = $1', [cpf]);
-  if (!rows[0] || !(await bcrypt.compare(senha, rows[0].senha_hash))) return erro(res, 'CPF ou senha incorretos.', 401);
   setSessao(res, rows[0].id);
   res.json({ ok: true });
 }));

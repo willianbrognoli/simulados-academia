@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS alunos (
   cpf         CHAR(11) NOT NULL UNIQUE,
   email       TEXT NOT NULL,
   whatsapp    TEXT NOT NULL,
-  senha_hash  TEXT NOT NULL,
+  senha_hash  TEXT,
+  firebase_uid TEXT UNIQUE,
   criado_em   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -149,6 +150,9 @@ CREATE TABLE IF NOT EXISTS tentativas (
   por_materia      JSONB,
   primeira         BOOLEAN NOT NULL DEFAULT false
 );
+-- migração 14/10/2026: login pelo Firebase (senha fica com o Firebase; CPF segue UNIQUE = uma conta por pessoa)
+ALTER TABLE alunos ADD COLUMN IF NOT EXISTS firebase_uid TEXT UNIQUE;
+ALTER TABLE alunos ALTER COLUMN senha_hash DROP NOT NULL;
 -- migração 14/10/2026: tipo 'tema'
 ALTER TABLE simulados DROP CONSTRAINT IF EXISTS simulados_tipo_check;
 ALTER TABLE simulados ADD CONSTRAINT simulados_tipo_check CHECK (tipo IN ('prova_real', 'banca', 'materia', 'tema', 'edital', 'livre'));

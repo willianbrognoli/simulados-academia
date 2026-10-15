@@ -434,3 +434,11 @@ body.blur-prova .prova, body.blur-prova .pbar { filter: blur(14px); pointer-even
 .adm-prev-t { font-size: 13px; letter-spacing: .08em; display: flex; align-items: center; gap: 8px; color: var(--txt2); margin-top: 6px; }
 .adm-prev { min-height: 0; padding: 18px; }
 @media (max-width: 960px) { .adm { grid-template-columns: 1fr; } .adm-lista { position: static; max-height: 60vh; } .adm-linha { grid-template-columns: 1fr; } }
+
+/* login Firebase */
+#b-google { gap: 10px; }
+.ou { display: flex; align-items: center; gap: 10px; color: var(--txt3); font-size: 12px; margin: 16px 0; }
+.ou::before, .ou::after { content: ""; flex: 1; height: 1px; background: var(--linha, rgba(127,127,127,.25)); }
+.link { background: none; border: 0; color: var(--ouro); font: inherit; font-size: 13px; cursor: pointer; display: block; margin: 12px auto 0; text-decoration: underline; text-underline-offset: 3px; }
+#passo-aviso p { color: var(--txt2); margin: 12px 0 16px; }
+#passo-login, #passo-aviso, #f-perfil { margin-top: 44px; }

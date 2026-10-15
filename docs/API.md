@@ -2,7 +2,7 @@
 
 Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"}`.
 
-- **Aluno:** cookie `sid`, criado no login ou no cadastro.
+- **Aluno:** login pelo Firebase Authentication (Google ou e-mail/senha com e-mail confirmado). O navegador manda o ID token do Firebase; o servidor confere a assinatura com as chaves públicas do Google e cria o cookie `sid`. Uma conta por CPF (`UNIQUE` no banco).
 - **Admin:** header `Authorization: Bearer <ADMIN_TOKEN>` ou o cookie `adm`, criado no login do painel `/admin` (a senha é o `ADMIN_TOKEN`, a sessão dura 8 h). Também aceita `?token=` para baixar o CSV pelo navegador.
 
 ## Saúde
@@ -15,8 +15,8 @@ Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"
 
 | Método | Rota | Corpo | Observações |
 |---|---|---|---|
-| POST | `/api/cadastro` | `nome, cpf, email, whatsapp, senha` | CPF validado, um por conta; já faz login |
-| POST | `/api/login` | `cpf, senha` | Limite de 10 tentativas a cada 15 min por IP |
+| POST | `/api/entrar` | `idToken` | Conta existe: abre a sessão (`{ok}`). Não existe: `{cadastro, nome, email}`. E-mail não confirmado: 403 `{verificar}` |
+| POST | `/api/cadastro` | `idToken, nome, cpf, whatsapp` | Primeiro acesso. CPF validado e único: CPF já usado dá 409. O e-mail vem do token |
 | POST | `/api/logout` | — | |
 | GET | `/api/me` | — | `{nome, cpf (mascarado), tentativaAberta: {slug, titulo} \| null}` |
 
