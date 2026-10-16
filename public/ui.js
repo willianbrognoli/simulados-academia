@@ -220,24 +220,33 @@ function mat(el) {
 }
 
 // botão claro/escuro no cabeçalho de cada página
+// (um botão por cabeçalho: no /admin há o cartão de login E o topo do painel, e o painel também precisa do botão)
 (function () {
-  const cab = document.querySelector('.topo .in, .pbar .in, .auth-card');
-  if (!cab) return;
-  const b = document.createElement('button');
-  b.className = 'btn btn-linha btn-sm tema-btn';
-  b.type = 'button';
+  const cabs = [...document.querySelectorAll('.topo .in, .pbar .in, .auth-card')];
+  if (!cabs.length) return;
+  const botoes = [];
   const pintar = () => {
     const claro = document.documentElement.dataset.tema === 'claro';
-    b.innerHTML = `<span class="ms">${claro ? 'dark_mode' : 'light_mode'}</span>`;
-    b.title = b.ariaLabel = claro ? 'Mudar para modo escuro' : 'Mudar para modo claro';
+    for (const b of botoes) {
+      b.innerHTML = `<span class="ms">${claro ? 'dark_mode' : 'light_mode'}</span>`;
+      b.title = b.ariaLabel = claro ? 'Mudar para modo escuro' : 'Mudar para modo claro';
+    }
   };
-  b.addEventListener('click', () => {
+  const trocar = () => {
     const claro = document.documentElement.dataset.tema !== 'claro';
     if (claro) document.documentElement.dataset.tema = 'claro'; else delete document.documentElement.dataset.tema;
     try { localStorage.setItem('tema', claro ? 'claro' : 'escuro'); } catch (e) {}
     pintar();
-  });
+  };
+  for (const cab of cabs) {
+    if (cab.matches('.auth-card') && cabs.length > 1 && cab !== cabs[0]) continue;
+    const b = document.createElement('button');
+    b.className = 'btn btn-linha btn-sm tema-btn';
+    b.type = 'button';
+    b.addEventListener('click', trocar);
+    if (cab.classList.contains('auth-card')) { b.style.cssText = 'position:absolute;top:14px;right:14px'; cab.style.position = 'relative'; }
+    cab.appendChild(b);
+    botoes.push(b);
+  }
   pintar();
-  if (cab.classList.contains('auth-card')) { b.style.cssText = 'position:absolute;top:14px;right:14px'; cab.style.position = 'relative'; }
-  cab.appendChild(b);
 })();
