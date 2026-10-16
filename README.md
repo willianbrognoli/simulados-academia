@@ -50,10 +50,11 @@ Este projeto nasceu da base do simulado da Prof.ª Adriane Fauth (`simulados-fau
 4. **Catálogo.** O script `simulados:gerar` cria sozinho:
    - 1 simulado **prova real** por caderno com 10 ou mais questões;
    - 1 **estilo banca** por banca com 30 ou mais questões (sorteia 50);
-   - 1 **por matéria** por matéria com 20 ou mais questões (sorteia 20, sem limite de tentativas).
+   - 1 **por matéria** por matéria com 20 ou mais questões (sorteia 20, sem limite de tentativas);
+   - 1 **por tema** por tema com 15 ou mais questões (sorteia 15, sem limite de tentativas).
 
    Simulados de **edital** são montados à mão pela API.
-5. **Aluno.** O aluno se cadastra com nome, CPF, e-mail, WhatsApp e senha, escolhe o simulado no catálogo, faz a prova em tela cheia e vê o resultado com gabarito comentado.
+5. **Aluno.** O aluno entra pelo Firebase (Google ou e-mail e senha com e-mail confirmado), completa nome, CPF e WhatsApp no primeiro acesso, escolhe o simulado no catálogo, faz a prova em tela cheia e vê o resultado com gabarito comentado.
 
 ## Rodar localmente
 
@@ -131,7 +132,7 @@ Passo a passo completo, com os problemas já enfrentados no projeto da Fauth, em
 
 ## Regras implementadas
 
-- **Conta:** o CPF é validado pelos dígitos verificadores, e cada CPF tem uma conta só. A senha é guardada com bcrypt. A sessão fica num cookie HttpOnly assinado com HMAC e vale 7 dias.
+- **Conta:** login pelo Firebase Authentication (Google ou e-mail e senha). Conta por e-mail só entra com o e-mail confirmado, e o "Esqueci minha senha" é do próprio Firebase. O servidor confere o ID token com as chaves públicas do Google (sem SDK). O CPF é validado pelos dígitos verificadores, e cada CPF tem uma conta só. A sessão fica num cookie HttpOnly assinado com HMAC e vale 7 dias.
 - **Uma prova aberta por vez** por aluno, com índice único no banco e trava `FOR UPDATE` contra clique duplo.
 - **Intervalo entre tentativas** por simulado: 24 h por padrão; os treinos por matéria são livres.
 - **Tempo:**
@@ -171,6 +172,14 @@ Passo a passo completo, com os problemas já enfrentados no projeto da Fauth, em
 
 - Nenhum sistema web impede consulta a um **segundo aparelho**. A plataforma detecta e pune saídas da tela e dificulta cópias.
 - No **iPhone** não há tela cheia para páginas. A vigilância continua por troca de aba e saída do app.
-- **Não há confirmação de e-mail nem recuperação de senha.** A decisão entre e-mail e WhatsApp está pendente; veja `docs/ARQUITETURA.md`.
-- **Painel de revisão** em `/admin`: fila de questões, edição de enunciado, alternativas, gabarito, matéria e tema, com prévia do que o aluno vê.
+- Questões que dependem de figura ainda estão fora do ar: falta a rota de upload de imagem e o recorte das figuras do PDF.
+
+## Recursos de administração
+
+- **Painel `/admin`** (senha = `ADMIN_TOKEN`, sessão de 8 h):
+  - aba **Questões**: fila por situação, matéria e situação do comentário; busca; ações em lote; editor de enunciado, alternativas, gabarito, matéria, tema e comentário, com prévia do aluno;
+  - aba **Simulados**: simulados da Academia por cotas de matéria ou com questões escolhidas a dedo;
+  - botão **Gerar catálogo** no cabeçalho (o mesmo que `POST /api/admin/simulados/gerar`); o resumo do cabeçalho mostra, ao passar o mouse, os simulados por tipo e a situação dos comentários.
+- **Comentários por IA:** gerados fora da plataforma (`extracao/comentarios/`) e enviados por `POST /api/admin/comentarios`. Só `ia_aprovado` e `humano` aparecem para o aluno; `ia_revisar` espera a equipe.
+- **Leads:** `GET /api/admin/alunos.csv`.
 - **Modo claro e escuro:** botão no cabeçalho; a escolha fica salva no navegador. O padrão é o claro.

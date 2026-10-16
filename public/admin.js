@@ -26,22 +26,7 @@ $('#f-login').addEventListener('submit', async e => {
   try {
     await adm('/api/admin/login', { method: 'POST', body: { senha: e.target.senha.value } });
     e.target.reset();
-    document.addEventListener('keydown', e => {
-  if (!atual || !(e.ctrlKey || e.metaKey) || !$('#e-enun')) return;
-  if (e.key === 'Enter') { e.preventDefault(); $('#editor [data-a=aprovar]').click(); }
-  if (e.key.toLowerCase() === 's') { e.preventDefault(); $('#editor [data-a=salvar]').click(); }
-});
-
-// abas
-$('#abas').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  $$('#abas button').forEach(x => x.classList.toggle('on', x === b));
-  $('#tela-painel > main.adm:not(#aba-simulados)').classList.toggle('oculto', b.dataset.aba !== 'questoes');
-  $('#aba-simulados').classList.toggle('oculto', b.dataset.aba !== 'simulados');
-  if (b.dataset.aba === 'simulados' && window.abrirSimulados) window.abrirSimulados();
-});
-
-iniciar();
+    iniciar();
   } catch (x) { $('#login-erro').textContent = x.message; }
 });
 $('#sair').addEventListener('click', async () => { await adm('/api/admin/logout', { method: 'POST' }); mostrarLogin(); });
@@ -49,8 +34,24 @@ $('#sair').addEventListener('click', async () => { await adm('/api/admin/logout'
 async function resumo() {
   const r = await adm('/api/admin/resumo');
   const n = s => (r.itens.find(x => x.status === s) || {}).n || 0;
-  $('#resumo').textContent = `${n('aprovada')} no ar · ${n('revisar')} para revisar · ${n('removida')} removidas`;
+  const porTipo = {};
+  for (const s of r.simulados) if (s.ativo) porTipo[s.tipo] = (porTipo[s.tipo] || 0) + 1;
+  const com = Object.fromEntries((r.comentarios || []).map(c => [c.status, c.n]));
+  $('#resumo').textContent = `${n('aprovada')} no ar · ${n('revisar')} para revisar · ${n('removida')} removidas · ${porTipo.tema || 0} simulados por tema`;
+  $('#resumo').title = 'Simulados ativos: ' + Object.entries(porTipo).map(([t, q]) => `${t} ${q}`).join(', ') +
+    `\nComentários nas aprovadas: IA aprovado ${com.ia_aprovado || 0}, IA para revisar ${com.ia_revisar || 0}, equipe ${com.humano || 0}, antigos ${com.antigo || 0}, sem comentário ${com.sem || 0}`;
 }
+
+$('#gerar').addEventListener('click', async e => {
+  if (!confirm('Gerar o catálogo automático agora? Os simulados existentes são atualizados; tentativas e ranking não são apagados.')) return;
+  const b = e.currentTarget; b.disabled = true;
+  try {
+    const r = await adm('/api/admin/simulados/gerar', { method: 'POST', body: {} });
+    toast(`Catálogo gerado: ${r.simulados} simulados automáticos.`, 'ok');
+    resumo();
+  } catch (x) { toast(x.message, 'erro'); }
+  b.disabled = false;
+});
 
 async function carregar() {
   const q = new URLSearchParams({ status: $('#f-status').value, limite: POR_PAG, offset });

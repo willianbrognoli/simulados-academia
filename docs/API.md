@@ -39,7 +39,7 @@ Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"
 
 | Método | Rota | Corpo | Observações |
 |---|---|---|---|
-| GET | `/api/admin/resumo` | — | Questões por status, matérias, simulados, acervo e número de alunos |
+| GET | `/api/admin/resumo` | — | Questões por status, matérias, simulados, acervo, número de alunos e `comentarios` (situação do comentário nas aprovadas: `ia_aprovado`, `ia_revisar`, `humano`, `antigo`, `sem`) |
 | POST | `/api/admin/importar/inventario` | CSV (`text/csv`) ou `{"csv": "…"}` | Upsert de concursos pelo `id` |
 | POST | `/api/admin/importar/questoes` | JSON de uma prova | Use `?sobrescrever=1` para passar por cima da revisão |
 | POST | `/api/admin/login` | `senha` | Abre a sessão do painel; limite de 10 tentativas a cada 15 min |
@@ -50,4 +50,8 @@ Todas as respostas são JSON. Em caso de erro, o formato é `{"erro": "mensagem"
 | POST | `/api/admin/simulados/gerar` | `{minProva, minBanca, minMateria, minTema}` (opcional) | Cria ou atualiza o catálogo automático, inclusive os simulados por tema |
 | PUT | `/api/admin/simulados/:slug` | `titulo, subtitulo, tipo, regras, meta, ativo, destaque, ordem` | Simulado manual (edital/livre) |
 | POST | `/api/admin/recontar` | — | Recalcula `total_itens` de todos os simulados |
+| POST | `/api/admin/itens/lote` | `codigos[], status, motivo_remocao` | Aprova, manda para revisão ou tira até 500 questões; sem gabarito não aprova |
+| POST | `/api/admin/comentarios` | `[{codigo, comentario, status, nota}]` | Comentários gerados por IA (`status` = `ia_aprovado` ou `ia_revisar`). Nunca sobrescreve comentário `humano` |
+| GET | `/api/admin/simulados` | — | Simulados montados à mão (`edital`/`livre`) |
+| POST | `/api/admin/simulados` | `titulo, subtitulo, modo (cotas\|itens), cotas, codigos, duracao_min, intervalo_h, max_saidas, erro_anula, municipio, uf, ativo, destaque, slug` | Cria ou edita um simulado da Academia |
 | GET | `/api/admin/alunos.csv` | — | Leads: nome, CPF, e-mail, WhatsApp, cadastro e simulados feitos |

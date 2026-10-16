@@ -486,15 +486,17 @@ app.get('/api/ranking', auth, h(async (req, res) => {
 // ================= administração (Authorization: Bearer ADMIN_TOKEN) =================
 app.get('/api/admin/resumo', admin, h(async (req, res) => {
   const q = sql => pool.query(sql).then(r => r.rows);
-  const [itens, materias, simulados, concursos, alunos] = await Promise.all([
+  const [itens, materias, simulados, concursos, alunos, comentarios] = await Promise.all([
     q(`SELECT status, count(*)::int AS n FROM itens GROUP BY status ORDER BY status`),
     q(`SELECT m.nome, m.eixo, count(i.id)::int AS itens, count(i.id) FILTER (WHERE i.status = 'aprovada')::int AS aprovadas
        FROM materias m LEFT JOIN itens i ON i.materia_id = m.id GROUP BY m.id ORDER BY m.ordem, m.nome`),
     q(`SELECT slug, titulo, tipo, ativo, total_itens FROM simulados ORDER BY ordem, titulo`),
     q(`SELECT count(*)::int AS concursos, count(DISTINCT banca_id)::int AS bancas FROM concursos`),
     q(`SELECT count(*)::int AS n FROM alunos`),
+    q(`SELECT COALESCE(comentario_status, CASE WHEN comentario IS NULL THEN 'sem' ELSE 'antigo' END) AS status, count(*)::int AS n
+       FROM itens WHERE status = 'aprovada' GROUP BY 1 ORDER BY 1`),
   ]);
-  res.json({ statusLiberados: S.STATUS_LIBERADOS, itens, materias, simulados, acervo: concursos[0], alunos: alunos[0].n });
+  res.json({ statusLiberados: S.STATUS_LIBERADOS, itens, materias, simulados, acervo: concursos[0], alunos: alunos[0].n, comentarios });
 }));
 
 // corpo: o CSV puro (Content-Type: text/csv) ou {"csv": "..."}

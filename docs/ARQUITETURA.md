@@ -148,6 +148,7 @@ Os automáticos são recriados a cada `simulados:gerar`. Os manuais (`edital`, `
 ## Decisões e pendências herdadas
 
 - **Direito autoral:** o uso das provas foi liberado após consulta a advogado (13/10/2026). Boas práticas mantidas: exibir banca, órgão e ano em cada questão; comentários sempre originais.
-- **Confirmação de cadastro e recuperação de senha:** pendente, por e-mail (Resend/Brevo) ou WhatsApp. O cadastro já coleta os dois.
-- **Tela de revisão:** hoje a revisão é feita pela API (`GET/PATCH /api/admin/itens`). Uma tela `/admin` com a fila de revisão é o próximo incremento.
+- **Confirmação de cadastro e recuperação de senha:** resolvidas com o Firebase Authentication (14/10/2026). Google ou e-mail e senha; conta por e-mail só entra com o e-mail confirmado; o Firebase cuida da troca de senha. Ao trocar de domínio, incluir o novo em *Authentication › Settings › Authorized domains*.
+- **Tela de revisão:** feita em `/admin` (fila, editor, lote, simulados da Academia e botão de gerar o catálogo).
+- **Comentários:** gerados por IA com segunda conferência independente (`extracao/comentarios/`). Campo `itens.comentario_status`: `ia_aprovado` e `humano` aparecem para o aluno; `ia_revisar` fica escondido até a equipe revisar. Editar o comentário no `/admin` o torna `humano`, e a importação em lote nunca sobrescreve um comentário humano.
 - **Tempo por questão no resultado:** o contador de ritmo fica só no navegador. Para mostrar "questões acima do ritmo" no resultado, ele precisaria ser gravado no servidor.
