@@ -554,7 +554,8 @@ app.get('/api/admin/itens', admin, h(async (req, res) => {
   const off = Math.max(0, Number(req.query.offset) || 0);
   const w = ['i.status = ANY($1)'], p = [st];
   if (req.query.materia) { p.push(String(req.query.materia)); w.push(`m.nome = $${p.length}`); }
-  if (req.query.comentario) { p.push(String(req.query.comentario)); w.push(`i.comentario_status = $${p.length}`); }
+  if (req.query.comentario === 'sem') w.push(`i.comentario IS NULL`);
+  else if (req.query.comentario) { p.push(String(req.query.comentario)); w.push(`i.comentario_status = $${p.length}`); }
   if (req.query.q) { p.push('%' + String(req.query.q).trim() + '%'); w.push(`(i.codigo ILIKE $${p.length} OR i.enunciado ILIKE $${p.length})`); }
   const where = w.join(' AND ');
   const base = `FROM itens i JOIN provas p ON p.id = i.prova_id JOIN concursos c ON c.id = p.concurso_id
@@ -565,7 +566,7 @@ app.get('/api/admin/itens', admin, h(async (req, res) => {
     pool.query(`SELECT i.codigo, i.status, i.formato, i.numero_original, i.enunciado, i.alternativas, i.gabarito, i.escopo, i.escopo_local,
             i.alertas, i.comentario, i.comentario_status, i.comentario_nota, i.motivo_remocao, m.nome AS materia, t.nome AS tema, tb.conteudo AS texto_base,
             c.slug AS concurso, c.municipio, c.uf, c.ano, b.nome AS banca, p.arquivo
-     ${base} ORDER BY c.slug, i.numero_original LIMIT ${lim} OFFSET ${off}`, p)]);
+     ${base} ORDER BY c.slug, i.numero_original, i.codigo LIMIT ${lim} OFFSET ${off}`, p)]);
   res.json({ total: tot.rows[0].n, itens: rows });
 }));
 
